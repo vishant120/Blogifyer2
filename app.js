@@ -12,14 +12,15 @@ const blogRoute = require("./routes/blog");
 const commentRoute = require("./routes/comments");
 const profileRoute = require("./routes/profile");
 const notificationRoute = require("./routes/notification");
-const { checkForAuthenticationCookie } = require("./middlewares/auth");
+const { checkForAuthenticationCookie } = require("./services/authentication");
 
 const app = express();
-const PORT = process.env.PORT || 8000; // Use environment variable for PORT
+const PORT = process.env.PORT || 8000;
 
 // Debug: Log environment variables
 console.log('MONGODB_URI:', process.env.MONGODB_URI);
 console.log('PORT:', process.env.PORT);
+console.log('JWT_SECRET:', process.env.JWT_SECRET);
 
 // MongoDB Connection
 mongoose
