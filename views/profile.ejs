@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Profile | Blogify</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+</head>
+<body style="background-color: #1a2634; color: #ecf0f1; margin: 0; font-family: 'Arial', sans-serif;">
+  <%- include('partials/header', { user }) %>
+  <div style="
+    max-width: 800px;
+    margin: 2rem auto;
+    padding: 2rem;
+    background-color: #2c3e50;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  ">
+    <% if (success_msg) { %>
+      <p style="
+        padding: 1rem;
+        margin-bottom: 1rem;
+        background-color: #d4edda;
+        color: #155724;
+        border-radius: 4px;
+      "><i class="fas fa-check-circle"></i> <%= success_msg %></p>
+    <% } %>
+    <% if (error_msg) { %>
+      <p style="
+        padding: 1rem;
+        margin-bottom: 1rem;
+        background-color: #f8d7da;
+        color: #721c24;
+        border-radius: 4px;
+      "><i class="fas fa-exclamation-circle"></i> <%= error_msg %></p>
+    <% } %>
+
+    <% if (profileUser) { %>
+      <div style="
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 2rem;
+      ">
+        <img src="<%= profileUser.profileImageURL %>" alt="Profile Image" style="
+          width: 100px;
+          height: 100px;
+          border-radius: 50%;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        ">
+        <div style="flex: 1;">
+          <h2 style="
+            font-size: 1.5rem;
+            color: #ecf0f1;
+          "><%= profileUser.fullname %></h2>
+          <p style="color: #ecf0f1;"><%= profileUser.email %></p>
+          <p style="color: #ecf0f1;"><%= profileUser.bio || 'No bio provided' %></p>
+          <p style="color: #7f8c8d;">
+            <span class="followers-toggle" style="cursor: pointer; color: #3498db;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'" aria-label="View Followers">Followers: <%= profileUser.followers.length %></span> | 
+            <span class="following-toggle" style="cursor: pointer; color: #3498db;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'" aria-label="View Following">Following: <%= profileUser.following.length %></span>
+          </p>
+        </div>
+      </div>
+
+      <div style="
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 2rem;
+      ">
+        <% if (user && user._id.toString() !== profileUser._id.toString()) { %>
+          <form action="<%= isFollowing ? '/user/unfollow/' : '/user/follow/' %><%= profileUser._id %>" method="POST">
+            <button class="follow-btn" type="submit" style="
+              padding: 0.5rem 1rem;
+              background-color: <%= isFollowing ? '#e74c3c' : '#2ecc71' %>;
+              color: #ecf0f1;
+              border: none;
+              border-radius: 4px;
+              cursor: pointer;
+              font-size: 0.9rem;
+              transition: background-color 0.3s, transform 0.2s;
+            " onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+              <i class="fas <%= isFollowing ? 'fa-user-minus' : 'fa-user-plus' %>"></i>
+              <%= isFollowing ? 'Unfollow' : 'Follow' %>
+            </button>
+          </form>
+        <% } %>
+        <% if (user && user._id.toString() === profileUser._id.toString()) { %>
+          <button class="edit-btn" type="button" style="
+            padding: 0.5rem 1rem;
+            background-color: #3498db;
+            color: #ecf0f1;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: background-color 0.3s, transform 0.2s;
+          " onmouseover="this.style.backgroundColor='#2980b9'; this.style.transform='scale(1.05)'" onmouseout="this.style.backgroundColor='#3498db'; this.style.transform='scale(1)'">
+            <i class="fas fa-edit"></i> Edit Profile
+          </button>
+        <% } %>
+      </div>
+
+      <!-- Followers Popup -->
+      <div class="followers-popup" style="
+        display: none;
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background-color: #2c3e50;
+        padding: 2rem;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        z-index: 2000;
+        max-width: 400px;
+        width: 90%;
+        max-height: 80vh;
+        overflow-y: auto;
+      ">
+        <h3 style="color: #ecf0f1; margin-bottom: 1rem;">Followers</h3>
+        <button class="close-followers" style="
+          position: absolute;
+          top: 10px;
+          right: 10px;
+          background: none;
+          border: none;
+          color: #ecf0f1;
+          font-size: 1.2rem;
+          cursor: pointer;
+        " aria-label="Close Followers Popup">
+          <i class="fas fa-times"></i>
+        </button>
+        <% if (profileUser.followers.length === 0) { %>
+          <p style="color: #ecf0f1;">No followers yet.</p>
+        <% } else { %>
+          <% profileUser.followers.forEach(follower => { %>
+            <div style="
+              display: flex;
+              align-items: center;
+              gap: 1rem;
+              margin-bottom: 1rem;
+              padding: 0.5rem;
+              border-bottom: 1px solid #34495e;
+            ">
+              <img src="<%= follower.profileImageURL %>" alt="<%= follower.fullname %>'s Profile Image" style="
+                width: 40px;
+                height: 40px;
+                border-radius: 50%;
+              ">
+              <a href="/profile/<%= follower._id %>" style="
+                color: #3498db;
+                text-decoration: none;
+                font-size: 1rem;
+              " onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'"><%= follower.fullname %></a>
+            </div>
+          <% }) %>
+        <% } %>
+      </div>
+
+      <!-- Following Popup -->
+      <div class="following-popup" style="
+        display: none;
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background-color: #2c3e50;
+        padding: 2rem;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        z-index: 2000;
+        max-width: 400px;
+        width: 90%;
+        max-height: 80vh;
+        overflow-y: auto;
+      ">
+        <h3 style="color: #ecf0f1; margin-bottom: 1rem;">Following</h3>
+        <button class="close-following" style="
+          position: absolute;
+          top: 10px;
+          right: 10px;
+          background: none;
+          border: none;
+          color: #ecf0f1;
+          font-size: 1.2rem;
+          cursor: pointer;
+        " aria-label="Close Following Popup">
+          <i class="fas fa-times"></i>
+        </button>
+        <% if (profileUser.following.length === 0) { %>
+          <p style="color: #ecf0f1;">Not following anyone yet.</p>
+        <% } else { %>
+          <% profileUser.following.forEach(following => { %>
+            <div style="
+              display: flex;
+              align-items: center;
+              gap: 1rem;
+              margin-bottom: 1rem;
+              padding: 0.5rem;
+              border-bottom: 1px solid #34495e;
+            ">
+              <img src="<%= following.profileImageURL %>" alt="<%= following.fullname %>'s Profile Image" style="
+                width: 40px;
+                height: 40px;
+                border-radius: 50%;
+              ">
+              <a href="/profile/<%= following._id %>" style="
+                color: #3498db;
+                text-decoration: none;
+                font-size: 1rem;
+              " onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'"><%= following.fullname %></a>
+            </div>
+          <% }) %>
+        <% } %>
+      </div>
+
+      <!-- Edit Profile Popup -->
+      <% if (user && user._id.toString() === profileUser._id.toString()) { %>
+        <div class="edit-profile-popup" style="
+          display: none;
+          position: fixed;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          background-color: #2c3e50;
+          padding: 2rem;
+          border-radius: 8px;
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+          z-index: 2000;
+          max-width: 400px;
+          width: 90%;
+        ">
+          <h3 style="color: #ecf0f1; margin-bottom: 1rem;">Edit Profile</h3>
+          <button class="close-edit" style="
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: none;
+            border: none;
+            color: #ecf0f1;
+            font-size: 1.2rem;
+            cursor: pointer;
+          " aria-label="Close Edit Profile Popup">
+            <i class="fas fa-times"></i>
+          </button>
+          <form action="/profile" method="POST" enctype="multipart/form-data" style="
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+          ">
+            <label for="fullname" style="color: #ecf0f1;">Full Name</label>
+            <input type="text" id="fullname" name="fullname" value="<%= profileUser.fullname %>" aria-label="Full Name" style="
+              padding: 0.75rem;
+              border: 1px solid #34495e;
+              border-radius: 4px;
+              font-size: 1rem;
+              background-color: #34495e;
+              color: #ecf0f1;
+              transition: border-color 0.3s;
+            " onfocus="this.style.borderColor='#3498db'" onblur="this.style.borderColor='#34495e'">
+            <label for="email" style="color: #ecf0f1;">Email</label>
+            <input type="email" id="email" name="email" value="<%= profileUser.email %>" aria-label="Email" style="
+              padding: 0.75rem;
+              border: 1px solid #34495e;
+              border-radius: 4px;
+              font-size: 1rem;
+              background-color: #34495e;
+              color: #ecf0f1;
+              transition: border-color 0.3s;
+            " onfocus="this.style.borderColor='#3498db'" onblur="this.style.borderColor='#34495e'">
+            <label for="password" style="color: #ecf0f1;">New Password (leave blank to keep current)</label>
+            <input type="password" id="password" name="password" aria-label="Password" style="
+              padding: 0.75rem;
+              border: 1px solid #34495e;
+              border-radius: 4px;
+              font-size: 1rem;
+              background-color: #34495e;
+              color: #ecf0f1;
+              transition: border-color 0.3s;
+            " onfocus="this.style.borderColor='#3498db'" onblur="this.style.borderColor='#34495e'">
+            <label for="bio" style="color: #ecf0f1;">Bio</label>
+            <textarea id="bio" name="bio" aria-label="Bio" style="
+              padding: 0.75rem;
+              border: 1px solid #34495e;
+              border-radius: 4px;
+              font-size: 1rem;
+              background-color: #34495e;
+              color: #ecf0f1;
+              resize: vertical;
+              min-height: 100px;
+              transition: border-color 0.3s;
+            " onfocus="this.style.borderColor='#3498db'" onblur="this.style.borderColor='#34495e'"><%= profileUser.bio || '' %></textarea>
+            <label for="profileImage" style="color: #ecf0f1;">Profile Image</label>
+            <input type="file" id="profileImage" name="profileImage" accept="image/*" aria-label="Profile Image" style="
+              padding: 0.75rem;
+              border: 1px solid #34495e;
+              border-radius: 4px;
+              font-size: 1rem;
+              background-color: #34495e;
+              color: #ecf0f1;
+            ">
+            <button type="submit" style="
+              padding: 0.75rem;
+              background-color: #3498db;
+              color: #ecf0f1;
+              border: none;
+              border-radius: 4px;
+              cursor: pointer;
+              font-size: 1rem;
+              transition: background-color 0.3s, transform 0.2s;
+            " onmouseover="this.style.backgroundColor='#2980b9'; this.style.transform='scale(1.05)'" onmouseout="this.style.backgroundColor='#3498db'; this.style.transform='scale(1)'">
+              <i class="fas fa-save"></i> Update Profile
+            </button>
+          </form>
+        </div>
+      <% } %>
+
+      <div style="margin-top: 2rem;">
+        <h2 style="color: #ecf0f1;"><i class="fas fa-blog"></i> Blogs by <%= profileUser.fullname %></h2>
+        <% blogs.forEach(blog => { %>
+          <div style="
+            background-color: #34495e;
+            padding: 1rem;
+            border-radius: 4px;
+            margin-bottom: 1rem;
+            transition: transform 0.3s;
+          " onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
+            <h3 style="
+              font-size: 1.2rem;
+              color: #ecf0f1;
+            "><a href="/blog/<%= blog._id %>" style="
+              color: #3498db;
+              text-decoration: none;
+            " onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'"><%= blog.title %></a></h3>
+            <p style="
+              color: #ecf0f1;
+              line-height: 1.6;
+            "><%= blog.body.substring(0, 100) %>...</p>
+            <% if (user && user._id.toString() === blog.createdBy._id.toString()) { %>
+              <form action="/profile/blog/<%= blog._id %>?_method=DELETE" method="POST">
+                <button style="
+                  padding: 0.5rem 1rem;
+                  background-color: #e74c3c;
+                  color: #ecf0f1;
+                  border: none;
+                  border-radius: 4px;
+                  cursor: pointer;
+                  font-size: 0.9rem;
+                  transition: background-color 0.3s, transform 0.2s;
+                " onmouseover="this.style.backgroundColor='#c0392b'; this.style.transform='scale(1.05)'" onmouseout="this.style.backgroundColor='#e74c3c'; this.style.transform='scale(1)'">
+                  <i class="fas fa-trash"></i> Delete Blog
+                </button>
+              </form>
+            <% } %>
+          </div>
+        <% }) %>
+      </div>
+    <% } else { %>
+      <p style="
+        padding: 1rem;
+        background-color: #f8d7da;
+        color: #721c24;
+        border-radius: 4px;
+      ">Profile not found.</p>
+    <% } %>
+  </div>
+
+  <!-- Overlay for Popups -->
+  <div class="popup-overlay" style="
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 1500;
+  "></div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const editBtn = document.querySelector('.edit-btn');
+      const editPopup = document.querySelector('.edit-profile-popup');
+      const followersToggle = document.querySelector('.followers-toggle');
+      const followingToggle = document.querySelector('.following-toggle');
+      const followersPopup = document.querySelector('.followers-popup');
+      const followingPopup = document.querySelector('.following-popup');
+      const closeEdit = document.querySelector('.close-edit');
+      const closeFollowers = document.querySelector('.close-followers');
+      const closeFollowing = document.querySelector('.close-following');
+      const overlay = document.querySelector('.popup-overlay');
+
+      // Function to show popup and overlay
+      const showPopup = (popup) => {
+        popup.style.display = 'block';
+        overlay.style.display = 'block';
+      };
+
+      // Function to hide popup and overlay
+      const hidePopup = (popup) => {
+        popup.style.display = 'none';
+        overlay.style.display = 'none';
+      };
+
+      // Edit Profile Popup
+      if (editBtn && editPopup) {
+        editBtn.addEventListener('click', () => {
+          showPopup(editPopup);
+        });
+      }
+      if (closeEdit) {
+        closeEdit.addEventListener('click', () => {
+          hidePopup(editPopup);
+        });
+      }
+
+      // Followers Popup
+      if (followersToggle && followersPopup) {
+        followersToggle.addEventListener('click', () => {
+          showPopup(followersPopup);
+        });
+      }
+      if (closeFollowers) {
+        closeFollowers.addEventListener('click', () => {
+          hidePopup(followersPopup);
+        });
+      }
+
+      // Following Popup
+      if (followingToggle && followingPopup) {
+        followingToggle.addEventListener('click', () => {
+          showPopup(followingPopup);
+        });
+      }
+      if (closeFollowing) {
+        closeFollowing.addEventListener('click', () => {
+          hidePopup(followingPopup);
+        });
+      }
+
+      // Close popups when clicking outside
+      overlay.addEventListener('click', () => {
+        hidePopup(editPopup);
+        hidePopup(followersPopup);
+        hidePopup(followingPopup);
+      });
+    });
+  </script>
+  <style>
+    .edit-profile-popup, .followers-popup, .following-popup {
+      animation: fadeIn 0.3s ease-in-out;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translate(-50%, -60%); }
+      to { opacity: 1; transform: translate(-50%, -50%); }
+    }
+    .edit-profile.active { display: none; } /* Hide old inline edit form */
+    @media (max-width: 768px) {
+      div[style*='max-width: 800px'] { margin: 1rem; padding: 1rem; }
+      div[style*='display: flex; align-items: center'] { flex-direction: column; align-items: flex-start; }
+      div[style*='display: flex; gap: 1rem'] { flex-direction: column; gap: 0.5rem; }
+      .edit-profile-popup, .followers-popup, .following-popup { width: 95%; }
+    }
+  </style>
+</body>
+</html>

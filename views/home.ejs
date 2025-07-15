@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Home | Blogify</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+</head>
+<body style="background-color: #1a2634; color: #ecf0f1; margin: 0; font-family: 'Arial', sans-serif;">
+  <%- include('partials/header', { user }) %>
+  <div style="
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+  ">
+    <h1 style="
+      font-size: 2rem;
+      color: #ecf0f1;
+      margin-bottom: 1rem;
+    "><i class="fas fa-blog"></i> Latest Blogs</h1>
+
+    <% if (success_msg) { %>
+      <p style="
+        padding: 1rem;
+        margin-bottom: 1rem;
+        background-color: #d4edda;
+        color: #155724;
+        border-radius: 4px;
+      "><i class="fas fa-check-circle"></i> <%= success_msg %></p>
+    <% } %>
+    <% if (error_msg) { %>
+      <p style="
+        padding: 1rem;
+        margin-bottom: 1rem;
+        background-color: #f8d7da;
+        color: #721c24;
+        border-radius: 4px;
+      "><i class="fas fa-exclamation-circle"></i> <%= error_msg %></p>
+    <% } %>
+
+    <% blogs.forEach(blog => { %>
+      <div class="blog-card" style="
+        background-color: #2c3e50;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        transition: transform 0.3s;
+      " onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
+        <% if (blog.coverImage) { %>
+          <img src="<%= blog.coverImage %>" alt="Cover Image" style="
+            max-width: 100%;
+            border-radius: 4px;
+            margin-bottom: 1rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+          ">
+        <% } %>
+        <h2 style="
+          font-size: 1.5rem;
+          color: #ecf0f1;
+          margin-bottom: 0.5rem;
+        "><a href="/blog/<%= blog._id %>" style="
+          color: #3498db;
+          text-decoration: none;
+        " onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'"><%= blog.title %></a></h2>
+        <p style="
+          color: #ecf0f1;
+          margin-bottom: 1rem;
+          line-height: 1.6;
+        "><%= blog.body.substring(0, 200) %>...</p>
+        <div style="
+          font-size: 0.9rem;
+          color: #7f8c8d;
+          margin-bottom: 1rem;
+        ">
+          Posted by <a href="/profile/<%= blog.createdBy._id %>" style="
+            color: #3498db;
+            text-decoration: none;
+          " onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'"><i class="fas fa-user"></i> <%= blog.createdBy.fullname %></a>
+          <i class="fas fa-clock"></i> <%= moment(blog.createdAt).fromNow() %>
+        </div>
+        <div style="
+          display: flex;
+          gap: 1rem;
+        ">
+          <% if (user) { %>
+            <form action="/blog/<%= blog._id %>/like" method="POST">
+              <button class="like-btn" type="submit" style="
+                padding: 0.5rem 1rem;
+                background-color: <%= blog.likes.includes(user._id) ? '#e74c3c' : '#3498db' %>;
+                color: #ecf0f1;
+                border: none;
+                border-radius: 4px;
+                cursor: pointer;
+                font-size: 0.9rem;
+                transition: background-color 0.3s, transform 0.2s;
+              " onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                <i class="fas <%= blog.likes.includes(user._id) ? 'fa-heart' : 'fa-heart-broken' %>"></i>
+                <%= blog.likes.includes(user._id) ? 'Unlike' : 'Like' %> (<%= blog.likes.length %>)
+              </button>
+            </form>
+            <form action="<%= blog.isFollowing ? '/user/unfollow/' : '/user/follow/' %><%= blog.createdBy._id %>" method="POST">
+              <button class="follow-btn" type="submit" style="
+                padding: 0.5rem 1rem;
+                background-color: <%= blog.isFollowing ? '#e74c3c' : '#2ecc71' %>;
+                color: #ecf0f1;
+                border: none;
+                border-radius: 4px;
+                cursor: pointer;
+                font-size: 0.9rem;
+                transition: background-color 0.3s, transform 0.2s;
+              " onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                <i class="fas <%= blog.isFollowing ? 'fa-user-minus' : 'fa-user-plus' %>"></i>
+                <%= blog.isFollowing ? 'Unfollow' : 'Follow' %>
+              </button>
+            </form>
+          <% } %>
+          <a href="/blog/<%= blog._id %>" style="
+            padding: 0.5rem 1rem;
+            background-color: #3498db;
+            color: #ecf0f1;
+            border: none;
+            border-radius: 4px;
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: background-color 0.3s, transform 0.2s;
+          " onmouseover="this.style.backgroundColor='#2980b9'; this.style.transform='scale(1.05)'" onmouseout="this.style.backgroundColor='#3498db'; this.style.transform='scale(1)'">
+            <i class="fas fa-eye"></i> View Post
+          </a>
+        </div>
+        <div style="
+          margin-top: 1rem;
+          padding-top: 1rem;
+          border-top: 1px solid #34495e;
+        ">
+          <h3 style="color: #ecf0f1;"><i class="fas fa-comments"></i> Comments</h3>
+          <% blog.comments.forEach(comment => { %>
+            <div style="
+              display: flex;
+              gap: 1rem;
+              margin-bottom: 1rem;
+            ">
+              <img src="<%= comment.createdBy.profileImageURL %>" alt="Profile Image" style="
+                width: 40px;
+                height: 40px;
+                border-radius: 50%;
+              ">
+              <div style="flex: 1;">
+                <p style="
+                  color: #ecf0f1;
+                  margin-bottom: 0.5rem;
+                "><strong><%= comment.createdBy.fullname %></strong>: <%= comment.content %></p>
+                <p style="
+                  font-size: 0.8rem;
+                  color: #7f8c8d;
+                "><i class="fas fa-clock"></i> <%= moment(comment.createdAt).fromNow() %></p>
+              </div>
+            </div>
+          <% }) %>
+        </div>
+      </div>
+    <% }) %>
+  </div>
+  <style>
+    @media (max-width: 768px) {
+      div[style*='max-width: 1200px'] { padding: 1rem; }
+      h1 { font-size: 1.5rem; }
+      .blog-card h2 { font-size: 1.2rem; }
+      .blog-card div[style*='display: flex; gap: 1rem'] { flex-direction: column; gap: 0.5rem; }
+    }
+  </style>
+</body>
+</html>

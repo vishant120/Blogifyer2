@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Arial', sans-serif;
+    }
+
+    header {
+      background-color: #2c3e50;
+      color: white;
+      padding: 1rem;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+
+    nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      max-width: 1200px;
+      margin: 0 auto;
+      flex-wrap: wrap;
+    }
+
+    nav a.logo {
+      color: white;
+      text-decoration: none;
+      font-size: 1.5rem;
+      font-weight: bold;
+    }
+
+    nav ul {
+      list-style: none;
+      display: flex;
+      gap: 1.5rem;
+    }
+
+    nav ul li a {
+      color: white;
+      font-size: 1rem;
+      text-decoration: none;
+      transition: color 0.3s;
+    }
+
+    nav ul li a:hover {
+      color: #3498db;
+    }
+
+    nav form {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    nav form input {
+      padding: 0.5rem;
+      border: none;
+      border-radius: 4px;
+      font-size: 1rem;
+    }
+
+    nav form button {
+      padding: 0.5rem 1rem;
+      background-color: #3498db;
+      border: none;
+      border-radius: 4px;
+      color: white;
+      cursor: pointer;
+      transition: background-color 0.3s, box-shadow 0.3s;
+    }
+
+    nav form button:hover {
+      background-color: #2980b9;
+      box-shadow: 0 0 10px rgba(52, 152, 219, 0.5);
+    }
+
+    .hamburger {
+      display: none;
+      font-size: 1.5rem;
+      background: none;
+      border: none;
+      color: white;
+      cursor: pointer;
+    }
+
+    .dropdown {
+      position: relative;
+      display: inline-block;
+    }
+
+    .dropdown-toggle {
+      background: none;
+      border: none;
+      color: white;
+      font-size: 1rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .dropdown-menu {
+      display: none;
+      position: absolute;
+      top: 100%;
+      right: 0;
+      background-color: #34495e;
+      border-radius: 4px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+      min-width: 150px;
+      z-index: 1000;
+    }
+
+    .dropdown-menu.active {
+      display: block;
+    }
+
+    .dropdown-menu a {
+      display: block;
+      padding: 0.75rem;
+      color: white;
+      text-decoration: none;
+      transition: background-color 0.3s;
+    }
+
+    .dropdown-menu a:hover {
+      background-color: #3498db;
+    }
+
+    @media (max-width: 768px) {
+      nav ul.main-nav {
+        display: none;
+        flex-direction: column;
+        width: 100%;
+        background-color: #34495e;
+        padding: 1rem;
+        position: absolute;
+        top: 60px;
+        left: 0;
+      }
+
+      nav ul.main-nav.active {
+        display: flex;
+      }
+
+      .hamburger {
+        display: block;
+      }
+
+      nav form {
+        width: 100%;
+        margin-top: 1rem;
+      }
+
+      nav form input {
+        flex: 1;
+      }
+
+      .dropdown-menu {
+        width: 100%;
+        right: 0;
+      }
+    }
+  </style>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const hamburger = document.querySelector('.hamburger');
+      const navMenu = document.querySelector('nav ul.main-nav');
+      const dropdownToggle = document.querySelector('.dropdown-toggle');
+      const dropdownMenu = document.querySelector('.dropdown-menu');
+
+      if (hamburger && navMenu) {
+        hamburger.addEventListener('click', () => {
+          navMenu.classList.toggle('active');
+        });
+      }
+
+      if (dropdownToggle && dropdownMenu) {
+        dropdownToggle.addEventListener('click', () => {
+          dropdownMenu.classList.toggle('active');
+        });
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', (e) => {
+          if (!dropdownToggle.contains(e.target) && !dropdownMenu.contains(e.target)) {
+            dropdownMenu.classList.remove('active');
+          }
+        });
+      }
+    });
+  </script>
+</head>
+<body>
+  <header>
+    <nav>
+      <a href="/" class="logo"><i class="fas fa-blog"></i> Blogify</a>
+      <button class="hamburger"><i class="fas fa-bars"></i></button>
+      <ul class="main-nav">
+        <li><a href="/"><i class="fas fa-home"></i> Home</a></li>
+        <% if (user) { %>
+          <li><a href="/blog/addBlog"><i class="fas fa-plus"></i> Add Blog</a></li>
+        <% } else { %>
+          <li><a href="/user/signin"><i class="fas fa-sign-in-alt"></i> Sign In</a></li>
+          <li><a href="/user/signup"><i class="fas fa-user-plus"></i> Sign Up</a></li>
+        <% } %>
+      </ul>
+      <% if (user) { %>
+        <div class="dropdown">
+          <button class="dropdown-toggle">
+            <img src="<%= user.profileImageURL %>" alt="Profile" style="width: 30px; height: 30px; border-radius: 50%; margin-right: 0.5rem;">
+            <%= user.fullname %>
+          </button>
+          <div class="dropdown-menu">
+            <a href="/profile"><i class="fas fa-user"></i> Profile</a>
+            <a href="/notification"><i class="fas fa-bell"></i> Notifications</a>
+            <a href="/user/logout"><i class="fas fa-sign-out-alt"></i> Logout</a>
+          </div>
+        </div>
+      <% } %>
+      <form action="/search" method="GET">
+        <input type="text" name="q" placeholder="Search users or blogs..." aria-label="Search">
+        <button type="submit"><i class="fas fa-search"></i></button>
+      </form>
+    </nav>
+  </header>
+</body>
+</html>
