@@ -12,7 +12,7 @@ const blogRoute = require("./routes/blog");
 const commentRoute = require("./routes/comments");
 const profileRoute = require("./routes/profile");
 const notificationRoute = require("./routes/notification");
-const { checkForAuthenticationCookie } = require("./services/authentication");
+const { checkForAuthenticationCookie } = require("./middlewares/auth");
 
 const app = express();
 const PORT = process.env.PORT || 8000;
