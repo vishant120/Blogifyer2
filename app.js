@@ -1,4 +1,3 @@
-
 require('dotenv').config();
 
 const express = require("express");
@@ -16,13 +15,18 @@ const notificationRoute = require("./routes/notification");
 const { checkForAuthenticationCookie } = require("./middlewares/auth");
 
 const app = express();
-const PORT = 8000;
+const PORT = process.env.PORT || 8000; // Use environment variable for PORT
+
+// Debug: Log environment variables
+console.log('MONGODB_URI:', process.env.MONGODB_URI);
+console.log('PORT:', process.env.PORT);
 
 // MongoDB Connection
 mongoose
   .connect(process.env.MONGODB_URI)
   .then(() => console.log("MongoDB connected"))
   .catch((err) => console.error("MongoDB connection error:", err));
+
 // Middleware
 app.use(methodOverride("_method"));
 app.use(express.urlencoded({ extended: false }));
