@@ -137,3 +137,5 @@ app.use("/notification", notificationRoute);
 
 // Start Server
 app.listen(PORT, () => console.log(`Server started on port ${PORT}`));
+
+module.exports = app;
