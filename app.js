@@ -17,10 +17,9 @@ const PORT = 8000;
 
 // MongoDB Connection
 mongoose
-  .connect("mongodb://localhost:27017/blogify5")
+  .connect(process.env.MONGODB_URI)
   .then(() => console.log("MongoDB connected"))
   .catch((err) => console.error("MongoDB connection error:", err));
-
 // Middleware
 app.use(methodOverride("_method"));
 app.use(express.urlencoded({ extended: false }));
