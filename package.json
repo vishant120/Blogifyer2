@@ -1,14 +1,14 @@
 {
   "name": "blogify",
   "version": "1.0.0",
-  "main": "app.js",
-  "scripts": {
-    "start": "node app.js",
-    "dev": "nodemon app.js"
-  },
+  "main": "index.js",
+ "scripts": {
+  "start": "node app.js",
+  "dev": "nodemon app.js"
+},
   "author": "",
   "license": "ISC",
-  "description": "A blogging platform with user authentication and social features",
+  "description": "",
   "dependencies": {
     "cookie-parser": "^1.4.7",
     "crypto": "^1.0.1",
@@ -23,8 +23,5 @@
   },
   "devDependencies": {
     "nodemon": "^3.1.10"
-  },
-  "engines": {
-    "node": ">=20.0.0"
   }
 }
