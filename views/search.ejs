@@ -150,7 +150,7 @@
       <% } else { %>
         <% users.forEach(user => { %>
           <div class="user-card">
-            <img src="<%= user.profileImageURL %>" alt="<%= user.fullname %>'s Profile Image" aria-label="Profile image">
+            <img src="<%= user.profileImageURL %>" alt="<%= user.fullname %>'s Profile Image" aria-label="Profile image of <%= user.fullname %>">
             <div class="user-info">
               <h3>
                 <a href="/profile/<%= user._id %>" aria-label="View <%= user.fullname %>'s profile">
