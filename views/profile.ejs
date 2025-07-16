@@ -74,9 +74,22 @@
       border-radius: 4px;
       margin-bottom: 1rem;
       transition: transform 0.3s;
+      display: flex;
+      gap: 1rem;
+      align-items: flex-start;
     }
     .blog-card:hover {
       transform: scale(1.02);
+    }
+    .blog-image {
+      width: 100px;
+      height: 100px;
+      object-fit: cover;
+      border-radius: 4px;
+      flex-shrink: 0;
+    }
+    .blog-content {
+      flex: 1;
     }
     @keyframes fadeIn {
       from { opacity: 0; transform: translate(-50%, -60%); }
@@ -87,6 +100,8 @@
       .profile-header { flex-direction: column; align-items: flex-start; }
       .profile-actions { flex-direction: column; gap: 0.5rem; }
       .popup { width: 95%; }
+      .blog-card { flex-direction: column; }
+      .blog-image { width: 100%; max-width: 200px; height: auto; }
     }
   </style>
 </head>
@@ -165,7 +180,7 @@
             cursor: pointer;
             font-size: 0.9rem;
             transition: background-color 0.3s, transform 0.2s;
-          " onmouseover="this.style.backgroundColor='#2980b9'; this.style.transform='scale(1.05)'" onmouseout="this.style.backgroundColor='#3498db'; this.style.transform='scale(1)'">
+          " onmouseover="this.style backgroundColor='#2980b9'; this.style.transform='scale(1.05)'" onmouseout="this.style.backgroundColor='#3498db'; this.style.transform='scale(1)'">
             <i class="fas fa-edit"></i> Edit Profile
           </button>
         <% } %>
@@ -240,7 +255,7 @@
       </div>
 
       <!-- Edit Profile Popup -->
-      <% if (user && user._id.toString() === profileUser._id.toString()) { %>
+      <% if (user dubbing="true" user && user._id.toString() === profileUser._id.toString()) { %>
         <div class="popup edit-profile-popup">
           <h3 style="color: #ecf0f1; margin-bottom: 1rem;">Edit Profile</h3>
           <button class="close-btn close-edit" aria-label="Close Edit Profile Popup">
@@ -328,31 +343,38 @@
         <% if (blogs && blogs.length > 0) { %>
           <% blogs.forEach(blog => { %>
             <div class="blog-card">
-              <h3 style="font-size: 1.2rem; color: #ecf0f1;">
-                <a href="/blog/<%= blog._id %>" style="
-                  color: #3498db;
-                  text-decoration: none;
-                " onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'"><%= blog.title %></a>
-              </h3>
-              <p style="color: #ecf0f1; line-height: 1.6;">
-                <%= blog.body && blog.body.length > 100 ? blog.body.substring(0, 100) + '...' : blog.body %>
-              </p>
-              <% if (user && blog.createdBy && user._id.toString() === blog.createdBy._id.toString()) { %>
-                <form action="/blog/<%= blog._id %>?_method=DELETE" method="POST" onsubmit="return confirm('Are you sure you want to delete this blog?');">
-                  <button style="
-                    padding: 0.5rem 1rem;
-                    background-color: #e74c3c;
-                    color: #ecf0f1;
-                    border: none;
-                    border-radius: 4px;
-                    cursor: pointer;
-                    font-size: 0.9rem;
-                    transition: background-color 0.3s, transform 0.2s;
-                  " onmouseover="this.style.backgroundColor='#c0392b'; this.style.transform='scale(1.05)'" onmouseout="this.style.backgroundColor='#e74c3c'; this.style.transform='scale(1)'">
-                    <i class="fas fa-trash"></i> Delete Blog
-                  </button>
-                </form>
+              <% if (blog.coverImage) { %>
+                <img src="<%= blog.coverImage %>" alt="<%= blog.title %> Cover Image" class="blog-image">
+              <% } else { %>
+                <img src="/default-blog-image.png" alt="Default Blog Cover Image" class="blog-image">
               <% } %>
+              <div class="blog-content">
+                <h3 style="font-size: 1.2rem; color: #ecf0f1;">
+                  <a href="/blog/<%= blog._id %>" style="
+                    color: #3498db;
+                    text-decoration: none;
+                  " onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'"><%= blog.title %></a>
+                </h3>
+                <p style="color: #ecf0f1; line-height: 1.6;">
+                  <%= blog.body && blog.body.length > 100 ? blog.body.substring(0, 100) + '...' : blog.body %>
+                </p>
+                <% if (user && blog.createdBy && user._id.toString() === blog.createdBy._id.toString()) { %>
+                  <form action="/blog/<%= blog._id %>?_method=DELETE" method="POST" onsubmit="return confirm('Are you sure you want to delete this blog?');">
+                    <button style="
+                      padding: 0.5rem 1rem;
+                      background-color: #e74c3c;
+                      color: #ecf0f1;
+                      border: none;
+                      border-radius: 4px;
+                      cursor: pointer;
+                      font-size: 0.9rem;
+                      transition: background-color 0.3s, transform 0.2s;
+                    " onmouseover="this.style.backgroundColor='#c0392b'; this.style.transform='scale(1.05)'" onmouseout="this.style.backgroundColor='#e74c3c'; this.style.transform='scale(1)'">
+                      <i class="fas fa-trash"></i> Delete Blog
+                    </button>
+                  </form>
+                <% } %>
+              </div>
             </div>
           <% }) %>
         <% } else { %>
