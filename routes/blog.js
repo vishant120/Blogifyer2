@@ -1,18 +1,11 @@
 const { Router } = require("express");
-const multer = require("multer");
-const path = require("path");
 const Blog = require("../models/blog");
 const Comment = require("../models/comments");
 const User = require("../models/user");
 const Notification = require("../models/notification");
+const cloudinaryUpload = require("../middlewares/cloudinaryUpload");
 
 const router = Router();
-
-const storage = multer.diskStorage({
-  destination: (_req, _file, cb) => cb(null, path.resolve("./public/uploads/")),
-  filename: (_req, file, cb) => cb(null, `${Date.now()}-${file.originalname}`),
-});
-const upload = multer({ storage });
 
 // GET /blog/addBlog
 router.get("/addBlog", (req, res) =>
@@ -50,7 +43,7 @@ router.get("/:id", async (req, res) => {
 });
 
 // POST /blog
-router.post("/", upload.single("coverImage"), async (req, res) => {
+router.post("/", cloudinaryUpload.single("coverImage"), async (req, res) => {
   try {
     if (!req.user) return res.redirect("/blog/addBlog?error_msg=Login required");
     const { title, body } = req.body;
@@ -58,7 +51,7 @@ router.post("/", upload.single("coverImage"), async (req, res) => {
       body,
       title,
       createdBy: req.user._id,
-      coverImage: req.file ? `/uploads/${req.file.filename}` : null,
+      coverImage: req.file ? req.file.path : null, // Cloudinary url
       likes: [],
     });
     return res.redirect(`/blog/${blog._id}?success_msg=Blog created`);
