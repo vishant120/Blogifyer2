@@ -341,7 +341,7 @@
                 line-height: 1.6;
               "><%= blog.body && blog.body.length > 100 ? blog.body.substring(0, 100) + '...' : blog.body %></p>
               <% if (user && blog.createdBy && user._id.toString() === blog.createdBy._id.toString()) { %>
-                <form action="/profile/blog/<%= blog._id %>?_method=DELETE" method="POST" onsubmit="return confirm('Are you sure you want to delete this blog?');">
+                <form action="/blog/<%= blog._id %>?_method=DELETE" method="POST" onsubmit="return confirm('Are you sure you want to delete this blog?');">
                   <button style="
                     padding: 0.5rem 1rem;
                     background-color: #e74c3c;
