@@ -1,5 +1,4 @@
 require('dotenv').config();
-
 const express = require("express");
 const mongoose = require("mongoose");
 const path = require("path");
@@ -102,6 +101,8 @@ app.get("/search", async (req, res) => {
       })
         .populate("followers", "fullname profileImageURL")
         .sort({ fullname: 1 });
+
+      console.log("Found users:", users.map(u => u._id.toString())); // Debug log
 
       blogs = await Blog.find({
         $or: [
