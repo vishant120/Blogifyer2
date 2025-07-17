@@ -6,6 +6,7 @@ const Blog = require("../models/blog");
 const Comment = require("../models/comments");
 const { createTokenForUser } = require("../services/authentication");
 const cloudinaryUpload = require("../middlewares/cloudinaryUpload");
+const mongoose = require("mongoose");
 
 const router = Router();
 
@@ -47,6 +48,47 @@ router.get("/", async (req, res) => {
     });
   } catch (err) {
     console.error("Error loading profile:", err);
+    renderProfile(res, req.user, null, [], false, { error_msg: "Failed to load profile" });
+  }
+});
+
+// GET /profile/:id (other user's profile)
+router.get("/:id", async (req, res) => {
+  try {
+    console.log("Profile route hit for ID:", req.params.id); // Debug log
+    if (!mongoose.isValidObjectId(req.params.id)) {
+      console.log("Invalid ObjectId:", req.params.id);
+      return renderProfile(res, req.user, null, [], false, { error_msg: "Invalid user ID" });
+    }
+
+    const profileUser = await User.findById(req.params.id)
+      .populate("following", "fullname profileImageURL")
+      .populate("followers", "fullname profileImageURL")
+      .populate({
+        path: "likedBlogs",
+        populate: { path: "createdBy", select: "fullname profileImageURL" },
+      });
+
+    if (!profileUser) {
+      console.log("User not found for ID:", req.params.id);
+      return renderProfile(res, req.user, null, [], false, { error_msg: "User not found" });
+    }
+
+    const blogs = await Blog.find({ createdBy: req.params.id })
+      .populate("createdBy", "fullname profileImageURL")
+      .populate("likes", "fullname profileImageURL")
+      .sort({ createdAt: -1 });
+
+    const isFollowing = req.user
+      ? profileUser.followers.some((follower) => follower._id.equals(req.user._id))
+      : false;
+
+    renderProfile(res, req.user, profileUser, blogs, isFollowing, {
+      success_msg: req.query.success_msg,
+      error_msg: req.query.error_msg,
+    });
+  } catch (err) {
+    console.error("Error loading profile for ID:", req.params.id, err);
     renderProfile(res, req.user, null, [], false, { error_msg: "Failed to load profile" });
   }
 });
