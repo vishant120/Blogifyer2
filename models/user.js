@@ -35,6 +35,22 @@ const userSchema = new Schema(
     followers: [{ type: Schema.Types.ObjectId, ref: "User" }],
     likedBlogs: [{ type: Schema.Types.ObjectId, ref: "Blog" }],
     bio: { type: String, trim: true },
+    isVerified: {
+      type: Boolean,
+      default: false,
+    },
+    verificationCode: {
+      type: String,
+    },
+    verificationCodeExpires: {
+      type: Date,
+    },
+    resetPasswordToken: {
+      type: String,
+    },
+    resetPasswordExpires: {
+      type: Date,
+    },
   },
   { timestamps: true }
 );
@@ -50,6 +66,7 @@ userSchema.pre("save", function (next) {
 userSchema.statics.matchPassword = async function (email, password) {
   const user = await this.findOne({ email });
   if (!user) throw new Error("User not found");
+  if (!user.isVerified) throw new Error("Please verify your email before signing in");
 
   const salt = user.salt;
   const hashedPassword = user.password;
