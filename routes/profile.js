@@ -7,11 +7,17 @@ const Comment = require("../models/comments");
 const { createTokenForUser } = require("../services/authentication");
 const cloudinaryUpload = require("../middlewares/cloudinaryUpload");
 const mongoose = require("mongoose");
+const { sendEmail } = require("../middlewares/nodemailer");
 
 const router = Router();
 
+// Generate 6-digit code
+const generateCode = () => {
+  return Math.floor(100000 + Math.random() * 900000).toString();
+};
+
 // Utility: Render Profile with Defaults
-const renderProfile = (res, user, profileUser, blogs, isFollowing = false, messages = {}) => {
+const renderProfile = (res, user, profileUser, blogs, isFollowing = false, messages = {}, extra = {}) => {
   return res.render("profile", {
     user: user || null,
     profileUser,
@@ -19,6 +25,8 @@ const renderProfile = (res, user, profileUser, blogs, isFollowing = false, messa
     isFollowing,
     success_msg: messages.success_msg || null,
     error_msg: messages.error_msg || null,
+    showPasswordVerification: extra.showPasswordVerification || false,
+    newPassword: extra.newPassword || "",
   });
 };
 
@@ -55,7 +63,7 @@ router.get("/", async (req, res) => {
 // GET /profile/:id (other user's profile)
 router.get("/:id", async (req, res) => {
   try {
-    console.log("Profile route hit for ID:", req.params.id); // Debug log
+    console.log("Profile route hit for ID:", req.params.id);
     if (!mongoose.isValidObjectId(req.params.id)) {
       console.log("Invalid ObjectId:", req.params.id);
       return renderProfile(res, req.user, null, [], false, { error_msg: "Invalid user ID" });
@@ -100,7 +108,7 @@ router.post("/", cloudinaryUpload.single("profileImage"), async (req, res) => {
       return res.redirect("/user/signin?error_msg=Please log in to update your profile");
     }
 
-    const { fullname, email, password, bio } = req.body;
+    const { fullname, password, bio } = req.body;
     const update = {};
 
     if (fullname?.trim()) {
@@ -110,31 +118,59 @@ router.post("/", cloudinaryUpload.single("profileImage"), async (req, res) => {
       update.fullname = fullname.trim();
     }
 
-    if (email?.trim()) {
-      const e = email.trim();
-      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)) {
-        return res.redirect("/profile?error_msg=Invalid email format");
-      }
-      const exists = await User.findOne({ email: e, _id: { $ne: req.user._id } });
-      if (exists) return res.redirect("/profile?error_msg=Email already in use");
-      update.email = e;
+    if (bio?.trim()) {
+      update.bio = bio.trim();
+    }
+
+    if (req.file) {
+      update.profileImageURL = req.file.path; // Cloudinary URL
     }
 
     if (password) {
       if (password.length < 6) {
         return res.redirect("/profile?error_msg=Password must be at least 6 characters");
       }
-      const salt = randomBytes(16).toString("hex");
-      update.salt = salt;
-      update.password = createHmac("sha256", salt).update(password).digest("hex");
-    }
 
-    if (req.file) {
-      update.profileImageURL = req.file.path; // Cloudinary url
-    }
+      // Generate verification code
+      const verificationCode = generateCode();
+      const user = await User.findById(req.user._id);
+      user.resetPasswordToken = verificationCode;
+      user.resetPasswordExpires = Date.now() + 3600000; // 1 hour expiry
+      await user.save();
 
-    if (bio?.trim()) {
-      update.bio = bio.trim();
+      // Send verification email
+      const verificationUrl = `http://${req.headers.host}/profile/verify-password`;
+      await sendEmail({
+        to: user.email,
+        subject: "Verify Your Blogify Password Update",
+        html: `
+          <h2>Blogify Password Update</h2>
+          <p>Please enter the following code to verify your password update:</p>
+          <h3>${verificationCode}</h3>
+          <p>This code expires in 1 hour.</p>
+        `,
+      });
+
+      // Render profile with verification popup
+      const profileUser = await User.findById(req.user._id)
+        .populate("following", "fullname profileImageURL")
+        .populate("followers", "fullname profileImageURL")
+        .populate({
+          path: "likedBlogs",
+          populate: { path: "createdBy", select: "fullname profileImageURL" },
+        });
+
+      const blogs = await Blog.find({ createdBy: req.user._id })
+        .populate("createdBy", "fullname profileImageURL")
+        .populate("likes", "fullname profileImageURL")
+        .sort({ createdAt: -1 });
+
+      return renderProfile(res, req.user, profileUser, blogs, false, {
+        success_msg: "Verification code sent to your email",
+      }, {
+        showPasswordVerification: true,
+        newPassword: password,
+      });
     }
 
     if (!Object.keys(update).length) {
@@ -150,6 +186,90 @@ router.post("/", cloudinaryUpload.single("profileImage"), async (req, res) => {
   } catch (err) {
     console.error("Error updating profile:", err);
     return res.redirect("/profile?error_msg=Failed to update profile");
+  }
+});
+
+// POST /profile/verify-password
+router.post("/verify-password", async (req, res) => {
+  try {
+    if (!req.user) {
+      return res.redirect("/user/signin?error_msg=Please log in to update your password");
+    }
+
+    const { code, newPassword } = req.body;
+    const user = await User.findById(req.user._id)
+      .populate("following", "fullname profileImageURL")
+      .populate("followers", "fullname profileImageURL")
+      .populate({
+        path: "likedBlogs",
+        populate: { path: "createdBy", select: "fullname profileImageURL" },
+      });
+
+    if (!user) {
+      return res.redirect("/profile?error_msg=User not found");
+    }
+
+    if (user.resetPasswordToken !== code) {
+      const blogs = await Blog.find({ createdBy: req.user._id })
+        .populate("createdBy", "fullname profileImageURL")
+        .populate("likes", "fullname profileImageURL")
+        .sort({ createdAt: -1 });
+
+      return renderProfile(res, req.user, user, blogs, false, {
+        error_msg: "Invalid verification code",
+      }, {
+        showPasswordVerification: true,
+        newPassword,
+      });
+    }
+
+    if (user.resetPasswordExpires < Date.now()) {
+      const blogs = await Blog.find({ createdBy: req.user._id })
+        .populate("createdBy", "fullname profileImageURL")
+        .populate("likes", "fullname profileImageURL")
+        .sort({ createdAt: -1 });
+
+      return renderProfile(res, req.user, user, blogs, false, {
+        error_msg: "Verification code expired",
+      }, {
+        showPasswordVerification: true,
+        newPassword,
+      });
+    }
+
+    // Update password
+    const salt = randomBytes(16).toString("hex");
+    user.salt = salt;
+    user.password = createHmac("sha256", salt).update(newPassword).digest("hex");
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpires = undefined;
+    await user.save();
+
+    const token = createTokenForUser(user);
+    res.cookie("token", token, { httpOnly: true });
+
+    return res.redirect("/profile?success_msg=Password updated successfully");
+  } catch (err) {
+    console.error("Error verifying password update:", err);
+    const profileUser = await User.findById(req.user._id)
+      .populate("following", "fullname profileImageURL")
+      .populate("followers", "fullname profileImageURL")
+      .populate({
+        path: "likedBlogs",
+        populate: { path: "createdBy", select: "fullname profileImageURL" },
+      });
+
+    const blogs = await Blog.find({ createdBy: req.user._id })
+      .populate("createdBy", "fullname profileImageURL")
+      .populate("likes", "fullname profileImageURL")
+      .sort({ createdAt: -1 });
+
+    return renderProfile(res, req.user, profileUser, blogs, false, {
+      error_msg: "Failed to update password",
+    }, {
+      showPasswordVerification: true,
+      newPassword: req.body.newPassword,
+    });
   }
 });
 
