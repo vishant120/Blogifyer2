@@ -2,7 +2,7 @@ const { Router } = require("express");
 const User = require("../models/user");
 const Notification = require("../models/notification");
 const { createTokenForUser } = require("../services/authentication");
-const { sendEmail } = require("../utils/nodemailer");
+const { sendEmail } = require("../middlewares/nodemailer");
 const crypto = require("crypto");
 
 const router = Router();
