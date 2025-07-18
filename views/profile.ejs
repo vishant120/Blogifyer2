@@ -48,6 +48,9 @@
       overflow-y: auto;
       animation: fadeIn 0.3s ease-in-out;
     }
+    .popup.show {
+      display: block;
+    }
     .popup-overlay {
       display: none;
       position: fixed;
@@ -57,6 +60,9 @@
       height: 100%;
       background-color: rgba(0, 0, 0, 0.5);
       z-index: 1500;
+    }
+    .popup-overlay.show {
+      display: block;
     }
     .close-btn {
       position: absolute;
@@ -261,18 +267,7 @@
               color: #ecf0f1;
               transition: border-color 0.3s;
             " onfocus="this.style.borderColor='#3498db'" onblur="this.style.borderColor='#34495e'">
-            
-            <label for="email" style="color: #ecf0f1;">Email</label>
-            <input type="email" id="email" name="email" value="<%= profileUser.email %>" aria-label="Email" required style="
-              padding: 0.75rem;
-              border: 1px solid #34495e;
-              border-radius: 4px;
-              font-size: 1rem;
-              background-color: #34495e;
-              color: #ecf0f1;
-              transition: border-color 0.3s;
-            " onfocus="this.style.borderColor='#3498db'" onblur="this.style.borderColor='#34495e'">
-            
+
             <label for="password" style="color: #ecf0f1;">New Password (leave blank to keep current)</label>
             <input type="password" id="password" name="password" aria-label="New Password" style="
               padding: 0.75rem;
@@ -283,7 +278,7 @@
               color: #ecf0f1;
               transition: border-color 0.3s;
             " onfocus="this.style.borderColor='#3498db'" onblur="this.style.borderColor='#34495e'">
-            
+
             <label for="bio" style="color: #ecf0f1;">Bio</label>
             <textarea id="bio" name="bio" aria-label="Bio" style="
               padding: 0.75rem;
@@ -296,7 +291,7 @@
               min-height: 100px;
               transition: border-color 0.3s;
             " onfocus="this.style.borderColor='#3498db'" onblur="this.style.borderColor='#34495e'"><%= profileUser.bio || '' %></textarea>
-            
+
             <label for="profileImage" style="color: #ecf0f1;">Profile Image</label>
             <input type="file" id="profileImage" name="profileImage" accept="image/*" aria-label="Profile Image" style="
               padding: 0.75rem;
@@ -306,7 +301,7 @@
               background-color: #34495e;
               color: #ecf0f1;
             ">
-            
+
             <button type="submit" style="
               padding: 0.75rem;
               background-color: #3498db;
@@ -318,6 +313,63 @@
               transition: background-color 0.3s, transform 0.2s;
             " onmouseover="this.style.backgroundColor='#2980b9'; this.style.transform='scale(1.05)'" onmouseout="this.style.backgroundColor='#3498db'; this.style.transform='scale(1)'">
               <i class="fas fa-save"></i> Update Profile
+            </button>
+          </form>
+        </div>
+
+        <!-- Password Verification Code Popup -->
+        <div class="popup password-verification-popup">
+          <h3 style="color: #ecf0f1; margin-bottom: 1rem;">Enter Verification Code</h3>
+          <button class="close-btn close-password-verification" aria-label="Close Password Verification Popup">
+            <i class="fas fa-times"></i>
+          </button>
+          <% if (error_msg && showPasswordVerification) { %>
+            <p style="
+              padding: 1rem;
+              margin-bottom: 1rem;
+              background-color: #f8d7da;
+              color: #721c24;
+              border-radius: 4px;
+              text-align: center;
+            ">
+              <i class="fas fa-exclamation-circle"></i> <%= error_msg %>
+            </p>
+          <% } %>
+          <form action="/profile/verify-password" method="POST" style="
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+          ">
+            <input type="hidden" name="newPassword" value="<%= newPassword || '' %>">
+            <div style="position: relative;">
+              <i class="fas fa-key" style="
+                position: absolute;
+                left: 10px;
+                top: 50%;
+                transform: translateY(-50%);
+                color: #7f8c8d;
+              "></i>
+              <input type="text" id="code" name="code" required aria-label="Verification Code" placeholder="Enter Verification Code" style="
+                padding: 0.75rem 0.75rem 0.75rem 2.5rem;
+                border: 1px solid #34495e;
+                border-radius: 4px;
+                font-size: 1rem;
+                background-color: #34495e;
+                color: #ecf0f1;
+                transition: border-color 0.3s;
+              " onfocus="this.style.borderColor='#3498db'" onblur="this.style.borderColor='#34495e'">
+            </div>
+            <button type="submit" style="
+              padding: 0.75rem;
+              background-color: #3498db;
+              color: #ecf0f1;
+              border: none;
+              border-radius: 4px;
+              cursor: pointer;
+              font-size: 1rem;
+              transition: background-color 0.3s, transform 0.2s;
+            " onmouseover="this.style.backgroundColor='#2980b9'; this.style.transform='scale(1.05)'" onmouseout="this.style.backgroundColor='#3498db'; this.style.transform='scale(1)'">
+              <i class="fas fa-check"></i> Verify Code
             </button>
           </form>
         </div>
@@ -369,17 +421,19 @@
     <% } %>
   </div>
 
-  <div class="popup-overlay"></div>
+  <div class="popup-overlay <%= showPasswordVerification ? 'show' : '' %>"></div>
 
   <script>
     document.addEventListener('DOMContentLoaded', () => {
       const editBtn = document.querySelector('.edit-btn');
       const editPopup = document.querySelector('.edit-profile-popup');
+      const passwordVerificationPopup = document.querySelector('.password-verification-popup');
       const followersToggle = document.querySelector('.followers-toggle');
       const followingToggle = document.querySelector('.following-toggle');
       const followersPopup = document.querySelector('.followers-popup');
       const followingPopup = document.querySelector('.following-popup');
       const closeEdit = document.querySelector('.close-edit');
+      const closePasswordVerification = document.querySelector('.close-password-verification');
       const closeFollowers = document.querySelector('.close-followers');
       const closeFollowing = document.querySelector('.close-following');
       const overlay = document.querySelector('.popup-overlay');
@@ -387,8 +441,8 @@
       // Function to show popup and overlay
       const showPopup = (popup) => {
         if (popup) {
-          popup.style.display = 'block';
-          overlay.style.display = 'block';
+          popup.classList.add('show');
+          overlay.classList.add('show');
           const focusableEls = popup.querySelectorAll('a, button, input, textarea, [tabindex]:not([tabindex="-1"])');
           if (focusableEls.length > 0) focusableEls[0].focus();
         }
@@ -396,8 +450,8 @@
 
       // Function to hide popup and overlay
       const hidePopup = (popup) => {
-        if (popup) popup.style.display = 'none';
-        overlay.style.display = 'none';
+        if (popup) popup.classList.remove('show');
+        overlay.classList.remove('show');
       };
 
       // Edit Profile Popup
@@ -406,6 +460,11 @@
       }
       if (closeEdit && editPopup) {
         closeEdit.addEventListener('click', () => hidePopup(editPopup));
+      }
+
+      // Password Verification Popup
+      if (closePasswordVerification && passwordVerificationPopup) {
+        closePasswordVerification.addEventListener('click', () => hidePopup(passwordVerificationPopup));
       }
 
       // Followers Popup
@@ -439,6 +498,7 @@
       // Close popups when clicking outside
       overlay.addEventListener('click', () => {
         hidePopup(editPopup);
+        hidePopup(passwordVerificationPopup);
         hidePopup(followersPopup);
         hidePopup(followingPopup);
       });
@@ -447,6 +507,7 @@
       window.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') {
           hidePopup(editPopup);
+          hidePopup(passwordVerificationPopup);
           hidePopup(followersPopup);
           hidePopup(followingPopup);
         }
