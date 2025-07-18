@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Settings | Blogify</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+  <style>
+    body {
+      background-color: #1a2634;
+      color: #ecf0f1;
+      margin: 0;
+      font-family: 'Arial', sans-serif;
+    }
+    .container {
+      max-width: 800px;
+      margin: 2rem auto;
+      padding: 2rem;
+      background-color: #2c3e50;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    }
+    .settings-section {
+      margin-bottom: 2rem;
+    }
+    .settings-section h2 {
+      font-size: 1.5rem;
+      margin-bottom: 1rem;
+      color: #ecf0f1;
+    }
+    .settings-action {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 1rem;
+      background-color: #34495e;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+    .settings-action:hover {
+      background-color: #3e5a75;
+    }
+    .popup {
+      display: none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background-color: #2c3e50;
+      padding: 2rem;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+      z-index: 2000;
+      max-width: 400px;
+      width: 90%;
+      max-height: 80vh;
+      overflow-y: auto;
+      animation: fadeIn 0.3s ease-in-out;
+    }
+    .popup-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+      z-index: 1500;
+    }
+    .close-btn {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: none;
+      border: none;
+      color: #ecf0f1;
+      font-size: 1.2rem;
+      cursor: pointer;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translate(-50%, -60%); }
+      to { opacity: 1; transform: translate(-50%, -50%); }
+    }
+    input, textarea {
+      padding: 0.75rem;
+      border: 1px solid #34495e;
+      border-radius: 4px;
+      font-size: 1rem;
+      background-color: #34495e;
+      color: #ecf0f1;
+      width: 100%;
+      transition: border-color 0.3s;
+    }
+    input:focus, textarea:focus {
+      border-color: #3498db;
+    }
+    button {
+      padding: 0.75rem;
+      background-color: #3498db;
+      color: #ecf0f1;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 1rem;
+      transition: background-color 0.3s, transform 0.2s;
+    }
+    button:hover {
+      background-color: #2980b9;
+      transform: scale(1.05);
+    }
+    @media (max-width: 768px) {
+      .container { margin: 1rem; padding: 1rem; }
+      .popup { width: 95%; }
+    }
+  </style>
+</head>
+<body>
+  <%- include('partials/header', { user }) %>
+
+  <div class="container">
+    <% if (success_msg) { %>
+      <p style="
+        padding: 1rem;
+        margin-bottom: 1rem;
+        background-color: #d4edda;
+        color: #155724;
+        border-radius: 4px;
+      ">
+        <i class="fas fa-check-circle"></i> <%= success_msg %>
+      </p>
+    <% } %>
+    <% if (error_msg) { %>
+      <p style="
+        padding: 1rem;
+        margin-bottom: 1rem;
+        background-color: #f8d7da;
+        color: #721c24;
+        border-radius: 4px;
+      ">
+        <i class="fas fa-exclamation-circle"></i> <%= error_msg %>
+      </p>
+    <% } %>
+
+    <div class="settings-section">
+      <h2>Settings</h2>
+      <div class="settings-action update-profile-btn">
+        <i class="fas fa-user-edit"></i>
+        <span>Update Profile</span>
+      </div>
+      <div class="settings-action privacy-security-btn">
+        <i class="fas fa-shield-alt"></i>
+        <span>Privacy/Security</span>
+      </div>
+    </div>
+
+    <!-- Update Profile Popup -->
+    <div class="popup update-profile-popup">
+      <h3 style="color: #ecf0f1; margin-bottom: 1rem;">Update Profile</h3>
+      <button class="close-btn close-update-profile" aria-label="Close Update Profile Popup">
+        <i class="fas fa-times"></i>
+      </button>
+      <form action="/settings/update-profile" method="POST" enctype="multipart/form-data" style="
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+      ">
+        <label for="fullname" style="color: #ecf0f1;">Username</label>
+        <input type="text" id="fullname" name="fullname" value="<%= user.fullname %>" aria-label="Username" required>
+        
+        <label for="bio" style="color: #ecf0f1;">Bio</label>
+        <textarea id="bio" name="bio" aria-label="Bio" style="resize: vertical; min-height: 100px;"><%= user.bio || '' %></textarea>
+        
+        <label for="profileImage" style="color: #ecf0f1;">Profile Image</label>
+        <input type="file" id="profileImage" name="profileImage" accept="image/*" aria-label="Profile Image">
+        
+        <button type="submit">
+          <i class="fas fa-save"></i> Update Profile
+        </button>
+      </form>
+    </div>
+
+    <!-- Privacy/Security Popup -->
+    <div class="popup privacy-security-popup">
+      <h3 style="color: #ecf0f1; margin-bottom: 1rem;">Update Password</h3>
+      <button class="close-btn close-privacy-security" aria-label="Close Privacy/Security Popup">
+        <i class="fas fa-times"></i>
+      </button>
+      <form id="password-form" action="/settings/request-password-reset" method="POST" style="
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+      ">
+        <label for="password" style="color: #ecf0f1;">New Password</label>
+        <input type="password" id="password" name="password" aria-label="New Password" required>
+        <button type="submit">
+          <i class="fas fa-paper-plane"></i> Send Verification Code
+        </button>
+      </form>
+      <form id="verify-code-form" action="/settings/verify-password-reset" method="POST" style="
+        display: none;
+        flex-direction: column;
+        gap: 1rem;
+      ">
+        <input type="hidden" id="userId" name="userId" value="<%= user._id %>">
+        <input type="hidden" id="newPassword" name="newPassword">
+        <label for="code" style="color: #ecf0f1;">Verification Code</label>
+        <input type="text" id="code" name="code" aria-label="Verification Code" required>
+        <button type="submit">
+          <i class="fas fa-check"></i> Verify and Update
+        </button>
+      </form>
+    </div>
+
+    <div class="popup-overlay"></div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const updateProfileBtn = document.querySelector('.update-profile-btn');
+      const privacySecurityBtn = document.querySelector('.privacy-security-btn');
+      const updateProfilePopup = document.querySelector('.update-profile-popup');
+      const privacySecurityPopup = document.querySelector('.privacy-security-popup');
+      const closeUpdateProfile = document.querySelector('.close-update-profile');
+      const closePrivacySecurity = document.querySelector('.close-privacy-security');
+      const overlay = document.querySelector('.popup-overlay');
+      const passwordForm = document.querySelector('#password-form');
+      const verifyCodeForm = document.querySelector('#verify-code-form');
+
+      const showPopup = (popup) => {
+        if (popup) {
+          popup.style.display = 'block';
+          overlay.style.display = 'block';
+          const focusableEls = popup.querySelectorAll('a, button, input, textarea');
+          if (focusableEls.length > 0) focusableEls[0].focus();
+        }
+      };
+
+      const hidePopup = (popup) => {
+        if (popup) popup.style.display = 'none';
+        overlay.style.display = 'none';
+      };
+
+      if (updateProfileBtn && updateProfilePopup) {
+        updateProfileBtn.addEventListener('click', () => showPopup(updateProfilePopup));
+      }
+      if (closeUpdateProfile && updateProfilePopup) {
+        closeUpdateProfile.addEventListener('click', () => hidePopup(updateProfilePopup));
+      }
+
+      if (privacySecurityBtn && privacySecurityPopup) {
+        privacySecurityBtn.addEventListener('click', () => showPopup(privacySecurityPopup));
+      }
+      if (closePrivacySecurity && privacySecurityPopup) {
+        closePrivacySecurity.addEventListener('click', () => hidePopup(privacySecurityPopup));
+      }
+
+      overlay.addEventListener('click', () => {
+        hidePopup(updateProfilePopup);
+        hidePopup(privacySecurityPopup);
+      });
+
+      window.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+          hidePopup(updateProfilePopup);
+          hidePopup(privacySecurityPopup);
+        }
+      });
+
+      // Handle password form submission
+      if (passwordForm && verifyCodeForm) {
+        passwordForm.addEventListener('submit', async (e) => {
+          e.preventDefault();
+          const password = document.querySelector('#password').value;
+          try {
+            const response = await fetch('/settings/request-password-reset', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ password }),
+            });
+            const data = await response.json();
+            if (data.success) {
+              document.querySelector('#newPassword').value = password;
+              passwordForm.style.display = 'none';
+              verifyCodeForm.style.display = 'flex';
+            } else {
+              alert(data.error || 'Error sending verification code');
+            }
+          } catch (err) {
+            alert('Error sending verification code');
+          }
+        });
+      }
+    });
+  </script>
+</body>
+</html>
