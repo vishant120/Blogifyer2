@@ -101,14 +101,14 @@ router.get("/:id", async (req, res) => {
   }
 });
 
-// POST /profile (update profile)
+// POST /profile (update profile, excluding password)
 router.post("/", cloudinaryUpload.single("profileImage"), async (req, res) => {
   try {
     if (!req.user) {
       return res.redirect("/user/signin?error_msg=Please log in to update your profile");
     }
 
-    const { fullname, password, bio } = req.body;
+    const { fullname, bio } = req.body;
     const update = {};
 
     if (fullname?.trim()) {
@@ -124,53 +124,6 @@ router.post("/", cloudinaryUpload.single("profileImage"), async (req, res) => {
 
     if (req.file) {
       update.profileImageURL = req.file.path; // Cloudinary URL
-    }
-
-    if (password) {
-      if (password.length < 6) {
-        return res.redirect("/profile?error_msg=Password must be at least 6 characters");
-      }
-
-      // Generate verification code
-      const verificationCode = generateCode();
-      const user = await User.findById(req.user._id);
-      user.resetPasswordToken = verificationCode;
-      user.resetPasswordExpires = Date.now() + 3600000; // 1 hour expiry
-      await user.save();
-
-      // Send verification email
-      const verificationUrl = `http://${req.headers.host}/profile/verify-password`;
-      await sendEmail({
-        to: user.email,
-        subject: "Verify Your Blogify Password Update",
-        html: `
-          <h2>Blogify Password Update</h2>
-          <p>Please enter the following code to verify your password update:</p>
-          <h3>${verificationCode}</h3>
-          <p>This code expires in 1 hour.</p>
-        `,
-      });
-
-      // Render profile with verification popup
-      const profileUser = await User.findById(req.user._id)
-        .populate("following", "fullname profileImageURL")
-        .populate("followers", "fullname profileImageURL")
-        .populate({
-          path: "likedBlogs",
-          populate: { path: "createdBy", select: "fullname profileImageURL" },
-        });
-
-      const blogs = await Blog.find({ createdBy: req.user._id })
-        .populate("createdBy", "fullname profileImageURL")
-        .populate("likes", "fullname profileImageURL")
-        .sort({ createdAt: -1 });
-
-      return renderProfile(res, req.user, profileUser, blogs, false, {
-        success_msg: "Verification code sent to your email",
-      }, {
-        showPasswordVerification: true,
-        newPassword: password,
-      });
     }
 
     if (!Object.keys(update).length) {
@@ -189,7 +142,67 @@ router.post("/", cloudinaryUpload.single("profileImage"), async (req, res) => {
   }
 });
 
-// POST /profile/verify-password
+// POST /profile/send-verification-code (send verification code for password update)
+router.post("/send-verification-code", async (req, res) => {
+  try {
+    if (!req.user) {
+      return res.redirect("/user/signin?error_msg=Please log in to update your password");
+    }
+
+    const { password } = req.body;
+    if (!password || password.length < 6) {
+      return res.redirect("/profile?error_msg=Password must be at least 6 characters");
+    }
+
+    const user = await User.findById(req.user._id)
+      .populate("following", "fullname profileImageURL")
+      .populate("followers", "fullname profileImageURL")
+      .populate({
+        path: "likedBlogs",
+        populate: { path: "createdBy", select: "fullname profileImageURL" },
+      });
+
+    if (!user) {
+      return res.redirect("/profile?error_msg=User not found");
+    }
+
+    // Generate verification code
+    const verificationCode = generateCode();
+    user.resetPasswordToken = verificationCode;
+    user.resetPasswordExpires = Date.now() + 3600000; // 1 hour expiry
+    await user.save();
+
+    // Send verification email
+    const verificationUrl = `http://${req.headers.host}/profile/verify-password`;
+    await sendEmail({
+      to: user.email,
+      subject: "Verify Your Blogify Password Update",
+      html: `
+        <h2>Blogify Password Update</h2>
+        <p>Please enter the following code to verify your password update:</p>
+        <h3>${verificationCode}</h3>
+        <p>This code expires in 1 hour.</p>
+      `,
+    });
+
+    const blogs = await Blog.find({ createdBy: req.user._id })
+      .populate("createdBy", "fullname profileImageURL")
+      .populate("likes", "fullname profileImageURL")
+      .sort({ createdAt: -1 });
+
+    return renderProfile(res, req.user, user, blogs, false, {
+      success_msg: "Verification code sent to your email",
+    }, {
+      showPasswordVerification: true,
+      newPassword: password,
+    });
+  } catch (err) {
+    console.error("Error sending verification code:", err);
+    return res.redirect("/profile?error_msg=Failed to send verification code");
+  }
+});
+
+// POST /profile/verify-password (verify code and update password)
 router.post("/verify-password", async (req, res) => {
   try {
     if (!req.user) {
