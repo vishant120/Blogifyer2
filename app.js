@@ -6,6 +6,7 @@ const cookieParser = require("cookie-parser");
 const methodOverride = require("method-override");
 const moment = require("moment");
 
+const settingsRoute = require("./routes/settings");
 const userRoute = require("./routes/user");
 const blogRoute = require("./routes/blog");
 const commentRoute = require("./routes/comments");
@@ -145,6 +146,7 @@ app.use("/user", userRoute);
 app.use("/blog", blogRoute);
 app.use("/comment", commentRoute);
 app.use("/profile", profileRoute);
+app.use("/settings", settingsRoute);
 app.use("/notification", notificationRoute);
 
 // Start Server
