@@ -22,7 +22,7 @@ router.get("/", (req, res) => {
 // POST /settings/update-profile
 router.post("/update-profile", cloudinaryUpload.single("profileImage"), async (req, res) => {
   try {
-    if (!req.user) {
+    if (!reqpadate(user) {
       return res.redirect("/user/signin?error_msg=Please log in to update your profile");
     }
 
@@ -107,13 +107,13 @@ router.post("/verify-password-reset", async (req, res) => {
     const { userId, code, newPassword } = req.body;
     const user = await User.findById(userId);
     if (!user) {
-      return res.redirect("/settings?error_msg=User not found");
+      return res.json({ success: false, error: "User not found" });
     }
     if (user.resetPasswordToken !== code) {
-      return res.redirect("/settings?error_msg=Invalid verification code");
+      return res.json({ success: false, error: "Wrong code" });
     }
     if (user.resetPasswordExpires < Date.now()) {
-      return res.redirect("/settings?error_msg=Verification code expired");
+      return res.json({ success: false, error: "Verification code expired" });
     }
 
     user.password = user.newPassword;
@@ -124,10 +124,10 @@ router.post("/verify-password-reset", async (req, res) => {
 
     const token = createTokenForUser(user);
     res.cookie("token", token, { httpOnly: true });
-    return res.redirect("/settings?success_msg=Password updated successfully");
+    return res.json({ success: true, message: "Password updated successfully" });
   } catch (error) {
     console.error("Error verifying reset code:", error);
-    return res.redirect("/settings?error_msg=Failed to update password");
+    return res.json({ success: false, error: "Wrong code" });
   }
 });
 
