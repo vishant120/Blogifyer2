@@ -1,17 +1,14 @@
 const { Router } = require("express");
 const { randomBytes } = require("crypto");
-const bcrypt = require('bcrypt');
 const User = require("../models/user");
 const { sendEmail } = require("../middlewares/nodemailer");
 const cloudinaryUpload = require("../middlewares/cloudinaryUpload");
 const { createTokenForUser } = require("../services/authentication");
-const csrf = require('csurf');
-const csrfProtection = csrf({ cookie: true });
 
 const router = Router();
 
 // GET /settings
-router.get("/", csrfProtection, (req, res) => {
+router.get("/", (req, res) => {
   if (!req.user) {
     return res.redirect("/user/signin?error_msg=Please log in to view settings");
   }
@@ -19,15 +16,14 @@ router.get("/", csrfProtection, (req, res) => {
     user: req.user,
     success_msg: req.query.success_msg,
     error_msg: req.query.error_msg,
-    showVerifyCodePopup: false,
-    userId: "",
-    code: "",
-    csrfToken: req.csrfToken(),
+    showVerifyCodePopup: false, // Default value
+    userId: "", // Default value
+    code: "", // Default value
   });
 });
 
 // POST /settings/update-profile
-router.post("/update-profile", csrfProtection, cloudinaryUpload.single("profileImage"), async (req, res) => {
+router.post("/update-profile", cloudinaryUpload.single("profileImage"), async (req, res) => {
   try {
     if (!req.user) {
       return res.redirect("/user/signin?error_msg=Please log in to update your profile");
@@ -48,7 +44,7 @@ router.post("/update-profile", csrfProtection, cloudinaryUpload.single("profileI
     }
 
     if (req.file) {
-      update.profileImageURL = req.file.path;
+      update.profileImageURL = req.file.path; // Cloudinary URL
     }
 
     if (!Object.keys(update).length) {
@@ -68,7 +64,7 @@ router.post("/update-profile", csrfProtection, cloudinaryUpload.single("profileI
 });
 
 // POST /settings/request-password-reset
-router.post("/request-password-reset", csrfProtection, async (req, res) => {
+router.post("/request-password-reset", async (req, res) => {
   try {
     if (!req.user) {
       return res.json({ success: false, error: "Please log in" });
@@ -89,7 +85,7 @@ router.post("/request-password-reset", csrfProtection, async (req, res) => {
 
     const resetToken = randomBytes(32).toString("hex");
     user.resetPasswordToken = resetToken;
-    user.resetPasswordExpires = Date.now() + 3600000;
+    user.resetPasswordExpires = Date.now() + 3600000; // 1 hour expiry
     await user.save();
 
     const resetUrl = `http://${req.headers.host}/settings/verify-password-reset/${user._id}/${resetToken}`;
@@ -114,7 +110,7 @@ router.post("/request-password-reset", csrfProtection, async (req, res) => {
 });
 
 // GET /settings/verify-password-reset/:userId/:code
-router.get("/verify-password-reset/:userId/:code", csrfProtection, async (req, res) => {
+router.get("/verify-password-reset/:userId/:code", async (req, res) => {
   try {
     const { userId, code } = req.params;
     const user = await User.findById(userId);
@@ -132,10 +128,9 @@ router.get("/verify-password-reset/:userId/:code", csrfProtection, async (req, r
       user: req.user,
       success_msg: null,
       error_msg: null,
-      showVerifyCodePopup: true,
+      showVerifyCodePopup: true, // Show verification popup
       userId,
       code,
-      csrfToken: req.csrfToken(),
     });
   } catch (error) {
     console.error("Error in verify-password-reset GET:", error);
@@ -144,7 +139,7 @@ router.get("/verify-password-reset/:userId/:code", csrfProtection, async (req, r
 });
 
 // POST /settings/verify-password-reset
-router.post("/verify-password-reset", csrfProtection, async (req, res) => {
+router.post("/verify-password-reset", async (req, res) => {
   try {
     const { userId, code, password } = req.body;
     const user = await User.findById(userId);
@@ -158,8 +153,7 @@ router.post("/verify-password-reset", csrfProtection, async (req, res) => {
       return res.json({ success: false, error: "Verification code expired" });
     }
 
-    const saltRounds = 10;
-    user.password = await bcrypt.hash(password, saltRounds);
+    user.password = password; // Password will be hashed in pre-save hook
     user.resetPasswordToken = undefined;
     user.resetPasswordExpires = undefined;
     await user.save();
