@@ -7,7 +7,6 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
 </head>
 <body style="background-color: #1a2634; color: #ecf0f1; margin: 0; font-family: 'Arial', sans-serif;">
-  
   <div style="
     max-width: 400px;
     margin: 2rem auto;
@@ -33,66 +32,98 @@
         text-align: center;
       "><i class="fas fa-exclamation-circle"></i> <%= error %></p>
     <% } %>
+    <% if (success_msg) { %>
+      <p style="
+        padding: 1rem;
+        margin-bottom: 1rem;
+        background-color: #d4edda;
+        color: #155724;
+        border-radius: 4px;
+        text-align: center;
+      "><i class="fas fa-check-circle"></i> <%= success_msg %></p>
+    <% } %>
 
-    <form action="/user/signup" method="POST" style="
+    <form action="<%= showVerification ? '/user/verify-email/' + userId + '/' + verificationCode : '/user/signup' %>" method="POST" style="
       display: flex;
       flex-direction: column;
       gap: 1rem;
     ">
-      <div style="position: relative;">
-        <i class="fas fa-user" style="
-          position: absolute;
-          left: 10px;
-          top: 50%;
-          transform: translateY(-50%);
-          color: #7f8c8d;
-        "></i>
-        <input type="text" id="fullname" name="fullname" required aria-label="Full Name" placeholder="Full Name" style="
-          padding: 0.75rem 0.75rem 0.75rem 2.5rem;
-          border: 1px solid #34495e;
-          border-radius: 4px;
-          font-size: 1rem;
-          background-color: #34495e;
-          color: #ecf0f1;
-          transition: border-color 0.3s;
-        " onfocus="this.style.borderColor='#3498db'" onblur="this.style.borderColor='#34495e'">
-      </div>
-      <div style="position: relative;">
-        <i class="fas fa-envelope" style="
-          position: absolute;
-          left: 10px;
-          top: 50%;
-          transform: translateY(-50%);
-          color: #7f8c8d;
-        "></i>
-        <input type="email" id="email" name="email" required aria-label="Email" placeholder="Email" style="
-          padding: 0.75rem 0.75rem 0.75rem 2.5rem;
-          border: 1px solid #34495e;
-          border-radius: 4px;
-          font-size: 1rem;
-          background-color: #34495e;
-          color: #ecf0f1;
-          transition: border-color 0.3s;
-        " onfocus="this.style.borderColor='#3498db'" onblur="this.style.borderColor='#34495e'">
-      </div>
-      <div style="position: relative;">
-        <i class="fas fa-lock" style="
-          position: absolute;
-          left: 10px;
-          top: 50%;
-          transform: translateY(-50%);
-          color: #7f8c8d;
-        "></i>
-        <input type="password" id="password" name="password" required aria-label="Password" placeholder="Password" style="
-          padding: 0.75rem 0.75rem 0.75rem 2.5rem;
-          border: 1px solid #34495e;
-          border-radius: 4px;
-          font-size: 1rem;
-          background-color: #34495e;
-          color: #ecf0f1;
-          transition: border-color 0.3s;
-        " onfocus="this.style.borderColor='#3498db'" onblur="this.style.borderColor='#34495e'">
-      </div>
+      <% if (!showVerification) { %>
+        <div style="position: relative;">
+          <i class="fas fa-user" style="
+            position: absolute;
+            left: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #7f8c8d;
+          "></i>
+          <input type="text" id="fullname" name="fullname" value="<%= fullname || '' %>" required aria-label="Full Name" placeholder="Full Name" style="
+            padding: 0.75rem 0.75rem 0.75rem 2.5rem;
+            border: 1px solid #34495e;
+            border-radius: 4px;
+            font-size: 1rem;
+            background-color: #34495e;
+            color: #ecf0f1;
+            transition: border-color 0.3s;
+          " onfocus="this.style.borderColor='#3498db'" onblur="this.style.borderColor='#34495e'">
+        </div>
+        <div style="position: relative;">
+          <i class="fas fa-envelope" style="
+            position: absolute;
+            left: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #7f8c8d;
+          "></i>
+          <input type="email" id="email" name="email" value="<%= email || '' %>" required aria-label="Email" placeholder="Email" style="
+            padding: 0.75rem 0.75rem 0.75rem 2.5rem;
+            border: 1px solid #34495e;
+            border-radius: 4px;
+            font-size: 1rem;
+            background-color: #34495e;
+            color: #ecf0f1;
+            transition: border-color 0.3s;
+          " onfocus="this.style.borderColor='#3498db'" onblur="this.style.borderColor='#34495e'">
+        </div>
+        <div style="position: relative;">
+          <i class="fas fa-lock" style="
+            position: absolute;
+            left: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #7f8c8d;
+          "></i>
+          <input type="password" id="password" name="password" required aria-label="Password" placeholder="Password" style="
+            padding: 0.75rem 0.75rem 0.75rem 2.5rem;
+            border: 1px solid #34495e;
+            border-radius: 4px;
+            font-size: 1rem;
+            background-color: #34495e;
+            color: #ecf0f1;
+            transition: border-color 0.3s;
+          " onfocus="this.style.borderColor='#3498db'" onblur="this.style.borderColor='#34495e'">
+        </div>
+      <% } %>
+      <% if (showVerification) { %>
+        <div style="position: relative;">
+          <i class="fas fa-key" style="
+            position: absolute;
+            left: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #7f8c8d;
+          "></i>
+          <input type="text" id="code" name="code" required aria-label="Verification Code" placeholder="Enter Verification Code" style="
+            padding: 0.75rem 0.75rem 0.75rem 2.5rem;
+            border: 1px solid #34495e;
+            border-radius: 4px;
+            font-size: 1rem;
+            background-color: #34495e;
+            color: #ecf0f1;
+            transition: border-color 0.3s;
+          " onfocus="this.style.borderColor='#3498db'" onblur="this.style.borderColor='#34495e'">
+        </div>
+      <% } %>
       <button type="submit" style="
         padding: 0.75rem;
         background-color: #3498db;
@@ -103,7 +134,7 @@
         font-size: 1rem;
         transition: background-color 0.3s, transform 0.2s;
       " onmouseover="this.style.backgroundColor='#2980b9'; this.style.transform='scale(1.05)'" onmouseout="this.style.backgroundColor='#3498db'; this.style.transform='scale(1)'">
-        <i class="fas fa-user-plus"></i> Sign Up
+        <i class="fas <%= showVerification ? 'fa-check' : 'fa-user-plus' %>"></i> <%= showVerification ? 'Verify Email' : 'Sign Up' %>
       </button>
     </form>
     <a href="/user/signin" style="
