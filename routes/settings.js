@@ -16,6 +16,9 @@ router.get("/", (req, res) => {
     user: req.user,
     success_msg: req.query.success_msg,
     error_msg: req.query.error_msg,
+    showVerifyCodePopup: false, // Default value
+    userId: "", // Default value
+    code: "", // Default value
   });
 });
 
@@ -125,7 +128,7 @@ router.get("/verify-password-reset/:userId/:code", async (req, res) => {
       user: req.user,
       success_msg: null,
       error_msg: null,
-      showVerifyCodePopup: true,
+      showVerifyCodePopup: true, // Show verification popup
       userId,
       code,
     });
