@@ -2,7 +2,7 @@ const { Router } = require("express");
 const User = require("../models/user");
 const Notification = require("../models/notification");
 const { createTokenForUser } = require("../services/authentication");
-const { sendEmail } = require("../middlewares/nodemailer");
+const { sendEmail } = require("../utils/nodemailer");
 const crypto = require("crypto");
 
 const router = Router();
@@ -29,17 +29,16 @@ router.get("/signup", (req, res) => {
     user: req.user || null,
     error: req.query.error_msg,
     success_msg: req.query.success_msg,
-    showVerification: false, // Initially, don't show verification field
+    showVerification: false,
     email: req.query.email || "",
     fullname: req.query.fullname || "",
   });
 });
 
-// POST /user/signup (Initial submission: send verification code)
+// POST /user/signup
 router.post("/signup", async (req, res) => {
   const { fullname, email, password } = req.body;
   try {
-    // Check if user already exists
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.render("signup", {
@@ -53,10 +52,7 @@ router.post("/signup", async (req, res) => {
       });
     }
 
-    // Generate verification code
     const verificationCode = generateCode();
-
-    // Create temporary user (not verified yet)
     const user = await User.create({
       fullname,
       email,
@@ -64,10 +60,9 @@ router.post("/signup", async (req, res) => {
       likedBlogs: [],
       bio: "",
       verificationCode,
-      verificationCodeExpires: Date.now() + 3600000, // 1 hour expiry
+      verificationCodeExpires: Date.now() + 3600000,
     });
 
-    // Send verification email
     const verificationUrl = `http://${req.headers.host}/user/verify-email/${user._id}/${verificationCode}`;
     await sendEmail({
       to: email,
@@ -82,7 +77,6 @@ router.post("/signup", async (req, res) => {
       `,
     });
 
-    // Redirect to signup page with verification field
     return res.render("signup", {
       title: "Sign Up",
       user: req.user || null,
@@ -92,7 +86,7 @@ router.post("/signup", async (req, res) => {
       email,
       fullname,
       userId: user._id,
-      verificationCode, // For URL-based verification
+      verificationCode,
     });
   } catch (error) {
     return res.render("signup", {
@@ -137,7 +131,7 @@ router.get("/verify-email/:id/:code", async (req, res) => {
   }
 });
 
-// POST /user/verify-email/:id/:code (Handle verification code submission from signup form)
+// POST /user/verify-email/:id/:code
 router.post("/verify-email/:id/:code", async (req, res) => {
   const { code } = req.body;
   const { id } = req.params;
@@ -195,6 +189,9 @@ router.get("/forgot-password", (req, res) => {
     user: req.user || null,
     error: req.query.error_msg,
     success_msg: req.query.success_msg,
+    showPopup: false,
+    email: "",
+    userId: "",
   });
 });
 
@@ -210,14 +207,13 @@ router.post("/forgot-password", async (req, res) => {
     user.resetPasswordExpires = Date.now() + 3600000; // 1 hour expiry
     await user.save();
 
-    // Send reset email
     const resetUrl = `http://${req.headers.host}/user/reset-password/${user._id}/${resetCode}`;
     await sendEmail({
       to: email,
       subject: "Blogify Password Reset",
       html: `
         <h2>Reset Your Blogify Password</h2>
-        <p>Please enter the following code on the reset password page:</p>
+        <p>Please enter the following code in the popup on the forgot password page:</p>
         <h3>${resetCode}</h3>
         <p>Or click the link below:</p>
         <a href="${resetUrl}">Reset Password</a>
@@ -225,13 +221,49 @@ router.post("/forgot-password", async (req, res) => {
       `,
     });
 
-    return res.redirect(`/user/forgot-password?success_msg=Password reset code sent to your email`);
+    return res.render("forgot-password", {
+      title: "Forgot Password",
+      user: req.user || null,
+      error: null,
+      success_msg: "Password reset code sent to your email",
+      showPopup: true,
+      email,
+      userId: user._id,
+    });
   } catch (error) {
     return res.render("forgot-password", {
       title: "Forgot Password",
       user: req.user || null,
       error: error.message || "Error sending reset code",
       success_msg: null,
+      showPopup: false,
+      email,
+      userId: "",
+    });
+  }
+});
+
+// POST /user/verify-reset-code/:id
+router.post("/verify-reset-code/:id", async (req, res) => {
+  const { code } = req.body;
+  const { id } = req.params;
+
+  try {
+    const user = await User.findById(id);
+    if (!user) throw new Error("User not found");
+    if (user.resetPasswordToken !== code) throw new Error("Invalid reset code");
+    if (user.resetPasswordExpires < Date.now()) throw new Error("Reset code expired");
+
+    return res.redirect(`/user/reset-password/${id}/${code}`);
+  } catch (error) {
+    return res.render("forgot-password", {
+      title: "Forgot Password",
+      user: req.user || null,
+      error: error.message || "Invalid or expired reset code",
+      success_msg: null,
+      showPopup: true,
+      email: req.query.email || "",
+      userId: id,
     });
   }
 });
