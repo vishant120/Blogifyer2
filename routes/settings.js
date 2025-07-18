@@ -1,5 +1,5 @@
 const { Router } = require("express");
-const { randomBytes, createHmac } = require("crypto");
+const { randomBytes } = require("crypto");
 const User = require("../models/user");
 const { sendEmail } = require("../middlewares/nodemailer");
 const cloudinaryUpload = require("../middlewares/cloudinaryUpload");
@@ -22,7 +22,7 @@ router.get("/", (req, res) => {
 // POST /settings/update-profile
 router.post("/update-profile", cloudinaryUpload.single("profileImage"), async (req, res) => {
   try {
-    if (!reqpadate(user) {
+    if (!req.user) {
       return res.redirect("/user/signin?error_msg=Please log in to update your profile");
     }
 
@@ -67,9 +67,12 @@ router.post("/request-password-reset", async (req, res) => {
       return res.json({ success: false, error: "Please log in" });
     }
 
-    const { password } = req.body;
-    if (!password || password.length < 6) {
-      return res.json({ success: false, error: "Password must be at least 6 characters" });
+    const { password, confirmPassword } = req.body;
+    if (!password || password.length < 8) {
+      return res.json({ success: false, error: "Password must be at least 8 characters" });
+    }
+    if (password !== confirmPassword) {
+      return res.json({ success: false, error: "Passwords do not match" });
     }
 
     const user = await User.findById(req.user._id);
@@ -77,49 +80,79 @@ router.post("/request-password-reset", async (req, res) => {
       return res.json({ success: false, error: "User not found" });
     }
 
-    const resetCode = Math.floor(100000 + Math.random() * 900000).toString();
-    user.resetPasswordToken = resetCode;
+    const resetToken = randomBytes(32).toString("hex");
+    user.resetPasswordToken = resetToken;
     user.resetPasswordExpires = Date.now() + 3600000; // 1 hour expiry
-    user.newPassword = createHmac("sha256", user.salt).update(password).digest("hex");
     await user.save();
 
+    const resetUrl = `http://${req.headers.host}/settings/verify-password-reset/${user._id}/${resetToken}`;
     await sendEmail({
       to: user.email,
       subject: "Blogify Password Reset Verification",
       html: `
         <h2>Reset Your Blogify Password</h2>
-        <p>Please enter the following code to verify your password change:</p>
-        <h3>${resetCode}</h3>
+        <p>Please click the link below to verify your password change:</p>
+        <a href="${resetUrl}">Verify Password Change</a>
+        <p>Or enter the following code in the verification form:</p>
+        <h3>${resetToken}</h3>
         <p>This code expires in 1 hour.</p>
       `,
     });
 
-    return res.json({ success: true, message: "Verification code sent to your email" });
+    return res.json({ success: true, message: "Verification code sent to your email", userId: user._id, resetToken });
   } catch (error) {
     console.error("Error sending reset code:", error);
     return res.json({ success: false, error: "Failed to send verification code" });
   }
 });
 
+// GET /settings/verify-password-reset/:userId/:code
+router.get("/verify-password-reset/:userId/:code", async (req, res) => {
+  try {
+    const { userId, code } = req.params;
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.redirect("/settings?error_msg=User not found");
+    }
+    if (user.resetPasswordToken !== code) {
+      return res.redirect("/settings?error_msg=Invalid verification code");
+    }
+    if (user.resetPasswordExpires < Date.now()) {
+      return res.redirect("/settings?error_msg=Verification code expired");
+    }
+
+    return res.render("settings", {
+      user: req.user,
+      success_msg: null,
+      error_msg: null,
+      showVerifyCodePopup: true,
+      userId,
+      code,
+    });
+  } catch (error) {
+    console.error("Error in verify-password-reset GET:", error);
+    return res.redirect("/settings?error_msg=Failed to verify code");
+  }
+});
+
 // POST /settings/verify-password-reset
 router.post("/verify-password-reset", async (req, res) => {
   try {
-    const { userId, code, newPassword } = req.body;
+    const { userId, code, password } = req.body;
     const user = await User.findById(userId);
     if (!user) {
       return res.json({ success: false, error: "User not found" });
     }
     if (user.resetPasswordToken !== code) {
-      return res.json({ success: false, error: "Wrong code" });
+      return res.json({ success: false, error: "Invalid verification code" });
     }
     if (user.resetPasswordExpires < Date.now()) {
       return res.json({ success: false, error: "Verification code expired" });
     }
 
-    user.password = user.newPassword;
+    user.password = password; // Password will be hashed in pre-save hook
     user.resetPasswordToken = undefined;
     user.resetPasswordExpires = undefined;
-    user.newPassword = undefined;
     await user.save();
 
     const token = createTokenForUser(user);
@@ -127,7 +160,7 @@ router.post("/verify-password-reset", async (req, res) => {
     return res.json({ success: true, message: "Password updated successfully" });
   } catch (error) {
     console.error("Error verifying reset code:", error);
-    return res.json({ success: false, error: "Wrong code" });
+    return res.json({ success: false, error: "Failed to verify code" });
   }
 });
 
