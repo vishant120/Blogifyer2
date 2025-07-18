@@ -16,10 +16,21 @@ const { checkForAuthenticationCookie } = require("./middlewares/auth");
 const app = express();
 const PORT = process.env.PORT || 8000;
 
-// Debug: Log environment variables
+// Validate environment variables
+const requiredEnvVars = ['MONGODB_URI', 'PORT', 'JWT_SECRET', 'EMAIL_USER', 'EMAIL_PASS'];
+requiredEnvVars.forEach((varName) => {
+  if (!process.env[varName]) {
+    console.error(`Error: Environment variable ${varName} is missing`);
+    process.exit(1);
+  }
+});
+
+// Debug: Log environment variables (mask sensitive info)
 console.log('MONGODB_URI:', process.env.MONGODB_URI);
 console.log('PORT:', process.env.PORT);
 console.log('JWT_SECRET:', process.env.JWT_SECRET);
+console.log('EMAIL_USER:', process.env.EMAIL_USER);
+console.log('EMAIL_PASS:', '****'); // Mask password
 
 // MongoDB Connection
 mongoose
@@ -102,7 +113,7 @@ app.get("/search", async (req, res) => {
         .populate("followers", "fullname profileImageURL")
         .sort({ fullname: 1 });
 
-      console.log("Found users:", users.map(u => u._id.toString())); // Debug log
+      console.log("Found users:", users.map(u => u._id.toString()));
 
       blogs = await Blog.find({
         $or: [
