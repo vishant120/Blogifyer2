@@ -84,6 +84,11 @@
     .blog-card:hover {
       transform: scale(1.02);
     }
+    .password-section {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
     @keyframes fadeIn {
       from { opacity: 0; transform: translate(-50%, -60%); }
       to { opacity: 1; transform: translate(-50%, -50%); }
@@ -93,6 +98,7 @@
       .profile-header { flex-direction: column; align-items: flex-start; }
       .profile-actions { flex-direction: column; gap: 0.5rem; }
       .popup { width: 95%; }
+      .password-section { flex-direction: column; align-items: flex-start; }
     }
   </style>
 </head>
@@ -269,15 +275,30 @@
             " onfocus="this.style.borderColor='#3498db'" onblur="this.style.borderColor='#34495e'">
 
             <label for="password" style="color: #ecf0f1;">New Password (leave blank to keep current)</label>
-            <input type="password" id="password" name="password" aria-label="New Password" style="
-              padding: 0.75rem;
-              border: 1px solid #34495e;
-              border-radius: 4px;
-              font-size: 1rem;
-              background-color: #34495e;
-              color: #ecf0f1;
-              transition: border-color 0.3s;
-            " onfocus="this.style.borderColor='#3498db'" onblur="this.style.borderColor='#34495e'">
+            <div class="password-section">
+              <input type="password" id="password" name="password" aria-label="New Password" style="
+                padding: 0.75rem;
+                border: 1px solid #34495e;
+                border-radius: 4px;
+                font-size: 1rem;
+                background-color: #34495e;
+                color: #ecf0f1;
+                transition: border-color 0.3s;
+                flex: 1;
+              " onfocus="this.style.borderColor='#3498db'" onblur="this.style.borderColor='#34495e'">
+              <button type="button" class="update-password-btn" style="
+                padding: 0.75rem;
+                background-color: #3498db;
+                color: #ecf0f1;
+                border: none;
+                border-radius: 4px;
+                cursor: pointer;
+                font-size: 1rem;
+                transition: background-color 0.3s, transform 0.2s;
+              " onmouseover="this.style.backgroundColor='#2980b9'; this.style.transform='scale(1.05)'" onmouseout="this.style.backgroundColor='#3498db'; this.style.transform='scale(1)'">
+                <i class="fas fa-lock"></i> Update Password
+              </button>
+            </div>
 
             <label for="bio" style="color: #ecf0f1;">Bio</label>
             <textarea id="bio" name="bio" aria-label="Bio" style="
@@ -428,6 +449,7 @@
       const editBtn = document.querySelector('.edit-btn');
       const editPopup = document.querySelector('.edit-profile-popup');
       const passwordVerificationPopup = document.querySelector('.password-verification-popup');
+      const updatePasswordBtn = document.querySelector('.update-password-btn');
       const followersToggle = document.querySelector('.followers-toggle');
       const followingToggle = document.querySelector('.following-toggle');
       const followersPopup = document.querySelector('.followers-popup');
@@ -465,6 +487,32 @@
       // Password Verification Popup
       if (closePasswordVerification && passwordVerificationPopup) {
         closePasswordVerification.addEventListener('click', () => hidePopup(passwordVerificationPopup));
+      }
+
+      // Update Password Button
+      if (updatePasswordBtn) {
+        updatePasswordBtn.addEventListener('click', () => {
+          const passwordInput = document.querySelector('#password').value;
+          if (!passwordInput) {
+            alert('Please enter a new password');
+            return;
+          }
+          if (passwordInput.length < 6) {
+            alert('Password must be at least 6 characters');
+            return;
+          }
+          // Create a temporary form to submit the password
+          const form = document.createElement('form');
+          form.method = 'POST';
+          form.action = '/profile/send-verification-code';
+          const input = document.createElement('input');
+          input.type = 'hidden';
+          input.name = 'password';
+          input.value = passwordInput;
+          form.appendChild(input);
+          document.body.appendChild(form);
+          form.submit();
+        });
       }
 
       // Followers Popup
