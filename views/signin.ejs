@@ -32,6 +32,16 @@
         text-align: center;
       "><i class="fas fa-exclamation-circle"></i> <%= error %></p>
     <% } %>
+    <% if (success_msg) { %>
+      <p style="
+        padding: 1rem;
+        margin-bottom: 1rem;
+        background-color: #d4edda;
+        color: #155724;
+        border-radius: 4px;
+        text-align: center;
+      "><i class="fas fa-check-circle"></i> <%= success_msg %></p>
+    <% } %>
 
     <form action="/user/signin" method="POST" style="
       display: flex;
@@ -87,12 +97,19 @@
         <i class="fas fa-sign-in-alt"></i> Sign In
       </button>
     </form>
-    <a href="/user/signup" style="
+    <a href="/user/forgot-password" style="
       color: #3498db;
       text-decoration: none;
       text-align: center;
       display: block;
       margin-top: 1rem;
+    " onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">Forgot Password?</a>
+    <a href="/user/signup" style="
+      color: #3498db;
+      text-decoration: none;
+      text-align: center;
+      display: block;
+      margin-top: 0.5rem;
     " onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">Don't have an account? Sign Up</a>
   </div>
   <style>
