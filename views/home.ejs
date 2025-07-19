@@ -1,726 +1,173 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Blogify - Home</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        :root {
-            --primary-color: #3498db;
-            --secondary-color: #2c3e50;
-            --success-color: #27ae60;
-            --danger-color: #e74c3c;
-            --warning-color: #f39c12;
-            --dark-bg: #1a1a1a;
-            --card-bg: #2a2a2a;
-            --text-primary: #ffffff;
-            --text-secondary: #b0b0b0;
-            --border-color: #404040;
-            --hover-color: #3a3a3a;
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: var(--dark-bg);
-            color: var(--text-primary);
-            line-height: 1.6;
-        }
-
-        .navbar {
-            background-color: var(--card-bg);
-            padding: 1rem 0;
-            border-bottom: 1px solid var(--border-color);
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            z-index: 1000;
-        }
-
-        .nav-container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 1rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .logo {
-            font-size: 1.8rem;
-            font-weight: bold;
-            color: var(--primary-color);
-            text-decoration: none;
-        }
-
-        .nav-menu {
-            display: flex;
-            align-items: center;
-            gap: 2rem;
-        }
-
-        .nav-menu a {
-            color: var(--text-primary);
-            text-decoration: none;
-            transition: color 0.3s;
-        }
-
-        .nav-menu a:hover {
-            color: var(--primary-color);
-        }
-
-        .profile-dropdown {
-            position: relative;
-        }
-
-        .profile-btn {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            background: none;
-            border: none;
-            color: var(--text-primary);
-            cursor: pointer;
-            padding: 0.5rem;
-            border-radius: 50px;
-            transition: background-color 0.3s;
-        }
-
-        .profile-btn:hover {
-            background-color: var(--hover-color);
-        }
-
-        .profile-avatar {
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            object-fit: cover;
-        }
-
-        .dropdown-menu {
-            position: absolute;
-            top: 100%;
-            right: 0;
-            background-color: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            min-width: 200px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-            opacity: 0;
-            visibility: hidden;
-            transform: translateY(-10px);
-            transition: all 0.3s ease;
-        }
-
-        .dropdown-menu.show {
-            opacity: 1;
-            visibility: visible;
-            transform: translateY(0);
-        }
-
-        .dropdown-item {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            padding: 0.75rem 1rem;
-            color: var(--text-primary);
-            text-decoration: none;
-            cursor: pointer;
-            transition: background-color 0.3s;
-        }
-
-        .dropdown-item:hover {
-            background-color: var(--hover-color);
-        }
-
-        .dropdown-item i {
-            width: 16px;
-            text-align: center;
-        }
-
-        .notification-badge {
-            position: absolute;
-            top: -5px;
-            right: -5px;
-            background-color: var(--danger-color);
-            color: white;
-            font-size: 0.7rem;
-            padding: 0.2rem 0.4rem;
-            border-radius: 50%;
-            min-width: 18px;
-            height: 18px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .main-container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 6rem 1rem 2rem;
-            display: grid;
-            grid-template-columns: 1fr 300px;
-            gap: 2rem;
-        }
-
-        .content-area {
-            display: flex;
-            flex-direction: column;
-            gap: 2rem;
-        }
-
-        .sidebar {
-            display: flex;
-            flex-direction: column;
-            gap: 2rem;
-        }
-
-        .blog-post {
-            background-color: var(--card-bg);
-            border-radius: 12px;
-            overflow: hidden;
-            border: 1px solid var(--border-color);
-            transition: transform 0.3s, box-shadow 0.3s;
-        }
-
-        .blog-post:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
-        }
-
-        .post-header {
-            padding: 1.5rem;
-            border-bottom: 1px solid var(--border-color);
-        }
-
-        .post-author {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            margin-bottom: 1rem;
-        }
-
-        .author-avatar {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            object-fit: cover;
-        }
-
-        .author-info h4 {
-            margin: 0;
-            font-size: 1rem;
-        }
-
-        .author-info span {
-            color: var(--text-secondary);
-            font-size: 0.9rem;
-        }
-
-        .follow-btn {
-            background-color: var(--primary-color);
-            color: white;
-            border: none;
-            padding: 0.5rem 1rem;
-            border-radius: 20px;
-            cursor: pointer;
-            font-size: 0.9rem;
-            transition: background-color 0.3s;
-            margin-left: auto;
-        }
-
-        .follow-btn:hover {
-            background-color: #2980b9;
-        }
-
-        .follow-btn.following {
-            background-color: var(--success-color);
-        }
-
-        .follow-btn.following:hover {
-            background-color: var(--danger-color);
-        }
-
-        .post-title {
-            font-size: 1.5rem;
-            margin-bottom: 0.5rem;
-            color: var(--text-primary);
-        }
-
-        .post-content {
-            padding: 0 1.5rem 1.5rem;
-        }
-
-        .post-excerpt {
-            color: var(--text-secondary);
-            line-height: 1.6;
-            margin-bottom: 1rem;
-        }
-
-        .post-actions {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            padding-top: 1rem;
-            border-top: 1px solid var(--border-color);
-        }
-
-        .action-btn {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            background: none;
-            border: none;
-            color: var(--text-secondary);
-            cursor: pointer;
-            padding: 0.5rem;
-            border-radius: 6px;
-            transition: all 0.3s;
-        }
-
-        .action-btn:hover {
-            color: var(--text-primary);
-            background-color: var(--hover-color);
-        }
-
-        .action-btn.liked {
-            color: var(--danger-color);
-        }
-
-        .comments-section {
-            margin-top: 2rem;
-            padding-top: 2rem;
-            border-top: 1px solid var(--border-color);
-        }
-
-        .comment-form {
-            margin-bottom: 2rem;
-        }
-
-        .comment-input {
-            width: 100%;
-            padding: 1rem;
-            background-color: var(--hover-color);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            color: var(--text-primary);
-            resize: vertical;
-            min-height: 100px;
-        }
-
-        .comment-input:focus {
-            outline: none;
-            border-color: var(--primary-color);
-        }
-
-        .comment-submit {
-            background-color: var(--primary-color);
-            color: white;
-            border: none;
-            padding: 0.75rem 1.5rem;
-            border-radius: 6px;
-            cursor: pointer;
-            margin-top: 1rem;
-            transition: background-color 0.3s;
-        }
-
-        .comment-submit:hover {
-            background-color: #2980b9;
-        }
-
-        .comment {
-            display: flex;
-            gap: 1rem;
-            margin-bottom: 1.5rem;
-            padding: 1rem;
-            background-color: var(--hover-color);
-            border-radius: 8px;
-        }
-
-        .comment-avatar {
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            object-fit: cover;
-        }
-
-        .comment-content {
-            flex: 1;
-        }
-
-        .comment-author {
-            font-weight: bold;
-            margin-bottom: 0.5rem;
-        }
-
-        .comment-text {
-            color: var(--text-secondary);
-            margin-bottom: 0.5rem;
-        }
-
-        .comment-time {
-            color: var(--text-secondary);
-            font-size: 0.8rem;
-        }
-
-        .widget {
-            background-color: var(--card-bg);
-            border-radius: 12px;
-            padding: 1.5rem;
-            border: 1px solid var(--border-color);
-        }
-
-        .widget h3 {
-            margin-bottom: 1rem;
-            color: var(--text-primary);
-        }
-
-        .trending-post {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            margin-bottom: 1rem;
-            padding: 0.5rem;
-            border-radius: 6px;
-            transition: background-color 0.3s;
-            cursor: pointer;
-        }
-
-        .trending-post:hover {
-            background-color: var(--hover-color);
-        }
-
-        .trending-post img {
-            width: 50px;
-            height: 50px;
-            border-radius: 6px;
-            object-fit: cover;
-        }
-
-        .trending-title {
-            font-size: 0.9rem;
-            color: var(--text-primary);
-            line-height: 1.4;
-        }
-
-        .notification-panel {
-            position: fixed;
-            top: 70px;
-            right: 20px;
-            width: 350px;
-            max-height: 400px;
-            background-color: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-            opacity: 0;
-            visibility: hidden;
-            transform: translateY(-10px);
-            transition: all 0.3s ease;
-            z-index: 1001;
-        }
-
-        .notification-panel.show {
-            opacity: 1;
-            visibility: visible;
-            transform: translateY(0);
-        }
-
-        .notification-header {
-            padding: 1rem;
-            border-bottom: 1px solid var(--border-color);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .notification-item {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            padding: 1rem;
-            border-bottom: 1px solid var(--border-color);
-            cursor: pointer;
-            transition: background-color 0.3s;
-        }
-
-        .notification-item:hover {
-            background-color: var(--hover-color);
-        }
-
-        .notification-item.unread {
-            background-color: rgba(52, 152, 219, 0.1);
-        }
-
-        .notification-avatar {
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            object-fit: cover;
-        }
-
-        .notification-content {
-            flex: 1;
-        }
-
-        .notification-text {
-            font-size: 0.9rem;
-            margin-bottom: 0.25rem;
-        }
-
-        .notification-time {
-            color: var(--text-secondary);
-            font-size: 0.8rem;
-        }
-
-        .alert {
-            padding: 1rem;
-            border-radius: 6px;
-            margin-bottom: 1rem;
-        }
-
-        .alert-success {
-            background-color: var(--success-color);
-        }
-
-        .alert-danger {
-            background-color: var(--danger-color);
-        }
-
-        @media (max-width: 768px) {
-            .main-container {
-                grid-template-columns: 1fr;
-                padding: 5rem 1rem 1rem;
-            }
-
-            .sidebar {
-                order: -1;
-            }
-
-            .nav-menu a {
-                display: none;
-            }
-
-            .notification-panel {
-                width: calc(100vw - 40px);
-                right: 20px;
-            }
-        }
-
-        @keyframes slideIn {
-            from {
-                opacity: 0;
-                transform: translateX(-20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateX(0);
-            }
-        }
-
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-            }
-            to {
-                opacity: 1;
-            }
-        }
-
-        .blog-post {
-            animation: slideIn 0.5s ease-out;
-        }
-
-        .notification-item {
-            animation: fadeIn 0.3s ease-out;
-        }
-
-        ::-webkit-scrollbar {
-            width: 8px;
-        }
-
-        ::-webkit-scrollbar-track {
-            background: var(--dark-bg);
-        }
-
-        ::-webkit-scrollbar-thumb {
-            background: var(--border-color);
-            border-radius: 4px;
-        }
-
-        ::-webkit-scrollbar-thumb:hover {
-            background: var(--text-secondary);
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Home | Blogify</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
 </head>
-<body>
-    <nav class="navbar">
-        <div class="nav-container">
-            <a href="/" class="logo">
-                <i class="fas fa-blog"></i> Blogify
-            </a>
-            <div class="nav-menu">
-                <a href="/">Home</a>
-                <a href="/search">Explore</a>
-                <a href="/blog/addBlog">Write</a>
-                <% if (user) { %>
-                    <div class="profile-dropdown">
-                        <button class="profile-btn" onclick="toggleDropdown()">
-                            <img src="<%= user.profileImageURL %>" alt="Profile" class="profile-avatar">
-                            <span><%= user.fullname %></span>
-                            <i class="fas fa-chevron-down"></i>
-                        </button>
-                        <div class="dropdown-menu" id="profileDropdown">
-                            <a href="/profile" class="dropdown-item">
-                                <i class="fas fa-user"></i> Profile
-                            </a>
-                            <a href="/notification" class="dropdown-item">
-                                <i class="fas fa-bell"></i> Notifications
-                                <% if (user.notifications && user.notifications.length > 0) { %>
-                                    <span class="notification-badge"><%= user.notifications.length %></span>
-                                <% } %>
-                            </a>
-                            <a href="/settings" class="dropdown-item">
-                                <i class="fas fa-cog"></i> Settings
-                            </a>
-                            <a href="/user/logout" class="dropdown-item">
-                                <i class="fas fa-sign-out-alt"></i> Logout
-                            </a>
-                        </div>
-                    </div>
-                <% } else { %>
-                    <a href="/user/signin">Sign In</a>
-                    <a href="/user/signup">Sign Up</a>
-                <% } %>
+<body style="background-color: #1a2634; color: #ecf0f1; margin: 0; font-family: 'Arial', sans-serif;">
+  <%- include('partials/header', { user }) %>
+  <div style="
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+  ">
+    <h1 style="
+      font-size: 2rem;
+      color: #ecf0f1;
+      margin-bottom: 1rem;
+    "><i class="fas fa-blog"></i> Latest Blogs</h1>
+
+    <% if (success_msg) { %>
+      <p style="
+        padding: 1rem;
+        margin-bottom: 1rem;
+        background-color: #d4edda;
+        color: #155724;
+        border-radius: 4px;
+      "><i class="fas fa-check-circle"></i> <%= success_msg %></p>
+    <% } %>
+    <% if (error_msg) { %>
+      <p style="
+        padding: 1rem;
+        margin-bottom: 1rem;
+        background-color: #f8d7da;
+        color: #721c24;
+        border-radius: 4px;
+      "><i class="fas fa-exclamation-circle"></i> <%= error_msg %></p>
+    <% } %>
+
+    <% blogs.forEach(blog => { %>
+      <div class="blog-card" style="
+        background-color: #2c3e50;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        transition: transform 0.3s;
+      " onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
+        <% if (blog.coverImage) { %>
+          <img src="<%= blog.coverImage %>" alt="Cover Image" style="
+            max-width: 100%;
+            border-radius: 4px;
+            margin-bottom: 1rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+          ">
+        <% } %>
+        <h2 style="
+          font-size: 1.5rem;
+          color: #ecf0f1;
+          margin-bottom: 0.5rem;
+        "><a href="/blog/<%= blog._id %>" style="
+          color: #3498db;
+          text-decoration: none;
+        " onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'"><%= blog.title %></a></h2>
+        <p style="
+          color: #ecf0f1;
+          margin-bottom: 1rem;
+          line-height: 1.6;
+        "><%= blog.body.substring(0, 200) %>...</p>
+        <div style="
+          font-size: 0.9rem;
+          color: #7f8c8d;
+          margin-bottom: 1rem;
+        ">
+          Posted by <a href="/profile/<%= blog.createdBy._id %>" style="
+            color: #3498db;
+            text-decoration: none;
+          " onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'"><i class="fas fa-user"></i> <%= blog.createdBy.fullname %></a>
+          <i class="fas fa-clock"></i> <%= moment(blog.createdAt).fromNow() %>
+        </div>
+        <div style="
+          display: flex;
+          gap: 1rem;
+        ">
+          <% if (user) { %>
+            <form action="/blog/<%= blog._id %>/like" method="POST">
+              <button class="like-btn" type="submit" style="
+                padding: 0.5rem 1rem;
+                background-color: <%= blog.likes.includes(user._id) ? '#e74c3c' : '#3498db' %>;
+                color: #ecf0f1;
+                border: none;
+                border-radius: 4px;
+                cursor: pointer;
+                font-size: 0.9rem;
+                transition: background-color 0.3s, transform 0.2s;
+              " onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                <i class="fas <%= blog.likes.includes(user._id) ? 'fa-heart' : 'fa-heart-broken' %>"></i>
+                <%= blog.likes.includes(user._id) ? 'Unlike' : 'Like' %> (<%= blog.likes.length %>)
+              </button>
+            </form>
+            <form action="<%= blog.isFollowing ? '/user/unfollow/' : '/user/follow/' %><%= blog.createdBy._id %>" method="POST">
+              <button class="follow-btn" type="submit" style="
+                padding: 0.5rem 1rem;
+                background-color: <%= blog.isFollowing ? '#e74c3c' : '#2ecc71' %>;
+                color: #ecf0f1;
+                border: none;
+                border-radius: 4px;
+                cursor: pointer;
+                font-size: 0.9rem;
+                transition: background-color 0.3s, transform 0.2s;
+              " onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                <i class="fas <%= blog.isFollowing ? 'fa-user-minus' : 'fa-user-plus' %>"></i>
+                <%= blog.isFollowing ? 'Unfollow' : 'Follow' %>
+              </button>
+            </form>
+          <% } %>
+          <a href="/blog/<%= blog._id %>" style="
+            padding: 0.5rem 1rem;
+            background-color: #3498db;
+            color: #ecf0f1;
+            border: none;
+            border-radius: 4px;
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: background-color 0.3s, transform 0.2s;
+          " onmouseover="this.style.backgroundColor='#2980b9'; this.style.transform='scale(1.05)'" onmouseout="this.style.backgroundColor='#3498db'; this.style.transform='scale(1)'">
+            <i class="fas fa-eye"></i> View Post
+          </a>
+        </div>
+        <div style="
+          margin-top: 1rem;
+          padding-top: 1rem;
+          border-top: 1px solid #34495e;
+        ">
+          <h3 style="color: #ecf0f1;"><i class="fas fa-comments"></i> Comments</h3>
+          <% blog.comments.forEach(comment => { %>
+            <div style="
+              display: flex;
+              gap: 1rem;
+              margin-bottom: 1rem;
+            ">
+              <img src="<%= comment.createdBy.profileImageURL %>" alt="Profile Image" style="
+                width: 40px;
+                height: 40px;
+                border-radius: 50%;
+              ">
+              <div style="flex: 1;">
+                <p style="
+                  color: #ecf0f1;
+                  margin-bottom: 0.5rem;
+                "><strong><%= comment.createdBy.fullname %></strong>: <%= comment.content %></p>
+                <p style="
+                  font-size: 0.8rem;
+                  color: #7f8c8d;
+                "><i class="fas fa-clock"></i> <%= moment(comment.createdAt).fromNow() %></p>
+              </div>
             </div>
+          <% }) %>
         </div>
-    </nav>
-
-    <div class="main-container">
-        <div class="content-area">
-            <% if (success_msg) { %>
-                <div class="alert alert-success"><%= success_msg %></div>
-            <% } %>
-            <% if (error_msg) { %>
-                <div class="alert alert-danger"><%= error_msg %></div>
-            <% } %>
-
-            <% blogs.forEach(blog => { %>
-                <div class="blog-post">
-                    <div class="post-header">
-                        <div class="post-author">
-                            <img src="<%= blog.createdBy.profileImageURL %>" alt="Author" class="author-avatar">
-                            <div class="author-info">
-                                <h4><%= blog.createdBy.fullname %></h4>
-                                <span><%= moment(blog.createdAt).fromNow() %></span>
-                            </div>
-                            <% if (user && user._id.toString() !== blog.createdBy._id.toString()) { %>
-                                <form action="/user/<%= blog.isFollowing ? 'unfollow' : 'follow' %>/<%= blog.createdBy._id %>" method="POST">
-                                    <button type="submit" class="follow-btn <%= blog.isFollowing ? 'following' : '' %>">
-                                        <%= blog.isFollowing ? 'Following' : 'Follow' %>
-                                    </button>
-                                </form>
-                            <% } %>
-                        </div>
-                        <h2 class="post-title"><a href="/blog/<%= blog._id %>"><%= blog.title %></a></h2>
-                    </div>
-                    <div class="post-content">
-                        <p class="post-excerpt"><%= blog.body.substring(0, 200) %>...</p>
-                        <div class="post-actions">
-                            <form action="/blog/<%= blog._id %>/like" method="POST">
-                                <button type="submit" class="action-btn <%= user && blog.likes.includes(user._id) ? 'liked' : '' %>">
-                                    <i class="fas fa-heart"></i> <span><%= blog.likes.length %></span>
-                                </button>
-                            </form>
-                            <button class="action-btn" onclick="toggleComments(this)">
-                                <i class="fas fa-comment"></i> <span><%= blog.comments.length %></span>
-                            </button>
-                            <button class="action-btn">
-                                <i class="fas fa-share"></i> Share
-                            </button>
-                        </div>
-                        <div class="comments-section" style="display: none;">
-                            <% if (user) { %>
-                                <div class="comment-form">
-                                    <form action="/comment/<%= blog._id %>" method="POST">
-                                        <textarea name="content" class="comment-input" placeholder="Write a comment..." required></textarea>
-                                        <button type="submit" class="comment-submit">Post Comment</button>
-                                    </form>
-                                </div>
-                            <% } %>
-                            <div class="comments-list">
-                                <% blog.comments.forEach(comment => { %>
-                                    <div class="comment">
-                                        <img src="<%= comment.createdBy.profileImageURL %>" alt="Commenter" class="comment-avatar">
-                                        <div class="comment-content">
-                                            <div class="comment-author"><%= comment.createdBy.fullname %></div>
-                                            <div class="comment-text"><%= comment.content %></div>
-                                            <div class="comment-time"><%= moment(comment.createdAt).fromNow() %></div>
-                                            <% if (user) { %>
-                                                <div class="comment-actions">
-                                                    <form action="/comment/<%= comment._id %>/like" method="POST">
-                                                        <input type="hidden" name="blogId" value="<%= blog._id %>">
-                                                        <button type="submit" class="action-btn <%= comment.likes.includes(user._id) ? 'liked' : '' %>">
-                                                            <i class="fas fa-heart"></i> <span><%= comment.likes.length %></span>
-                                                        </button>
-                                                    </form>
-                                                    <% if (user._id.toString() === comment.createdBy._id.toString()) { %>
-                                                        <form action="/comment/<%= comment._id %>?_method=DELETE" method="POST">
-                                                            <input type="hidden" name="blogId" value="<%= blog._id %>">
-                                                            <button type="submit" class="action-btn">
-                                                                <i class="fas fa-trash"></i> Delete
-                                                            </button>
-                                                        </form>
-                                                    <% } %>
-                                                </div>
-                                            <% } %>
-                                        </div>
-                                    </div>
-                                <% }) %>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            <% }) %>
-        </div>
-
-        <div class="sidebar">
-            <div class="widget">
-                <h3>Trending Posts</h3>
-                <% blogs.slice(0, 3).forEach(blog => { %>
-                    <a href="/blog/<%= blog._id %>" class="trending-post">
-                        <img src="<%= blog.coverImage || '/images/default.png' %>" alt="Trending">
-                        <div class="trending-title"><%= blog.title %></div>
-                    </a>
-                <% }) %>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        function toggleDropdown() {
-            document.getElementById('profileDropdown').classList.toggle('show');
-        }
-
-        function toggleComments(button) {
-            const commentsSection = button.closest('.blog-post').querySelector('.comments-section');
-            commentsSection.style.display = commentsSection.style.display === 'none' ? 'block' : 'none';
-        }
-
-        document.addEventListener('click', function(event) {
-            const dropdown = document.getElementById('profileDropdown');
-            const profileBtn = document.querySelector('.profile-btn');
-            if (!profileBtn.contains(event.target)) {
-                dropdown.classList.remove('show');
-            }
-        });
-    </script>
+      </div>
+    <% }) %>
+  </div>
+  <style>
+    @media (max-width: 768px) {
+      div[style*='max-width: 1200px'] { padding: 1rem; }
+      h1 { font-size: 1.5rem; }
+      .blog-card h2 { font-size: 1.2rem; }
+      .blog-card div[style*='display: flex; gap: 1rem'] { flex-direction: column; gap: 0.5rem; }
+    }
+  </style>
 </body>
 </html>
