@@ -175,13 +175,10 @@
       ">
         <label for="fullname" style="color: #ecf0f1;">Username</label>
         <input type="text" id="fullname" name="fullname" value="<%= user.fullname %>" aria-label="Username" required>
-        
         <label for="bio" style="color: #ecf0f1;">Bio</label>
- Head: <textarea id="bio" name="bio" aria-label="Bio" style="resize: vertical; min-height: 100px;"><%= user.bio || '' %></textarea>
-        
+        <textarea id="bio" name="bio" aria-label="Bio" style="resize: vertical; min-height: 100px;"><%= user.bio || '' %></textarea>
         <label for="profileImage" style="color: #ecf0f1;">Profile Image</label>
         <input type="file" id="profileImage" name="profileImage" accept="image/*" aria-label="Profile Image">
-        
         <button type="submit">
           <i class="fas fa-save"></i> Update Profile
         </button>
@@ -190,7 +187,7 @@
 
     <!-- Privacy/Security Popup -->
     <div class="popup privacy-security-popup">
-      <h3 style="color: #ecf0f1; margin-bottom: 1rem;">Update Password</h3>
+      <h3 style="color: #ecf0f1; margin-bottom: 1rem;">Request Password Reset</h3>
       <button class="close-btn close-privacy-security" aria-label="Close Privacy/Security Popup">
         <i class="fas fa-times"></i>
       </button>
@@ -200,25 +197,9 @@
         flex-direction: column;
         gap: 1rem;
       ">
-        <label for="password" style="color: #ecf0f1;">New Password</label>
-        <input type="password" id="password" name="password" aria-label="New Password" required>
-        <label for="confirmPassword" style="color: #ecf0f1;">Confirm Password</label>
-        <input type="password" id="confirmPassword" name="confirmPassword" aria-label="Confirm Password" required>
+        <p style="color: #ecf0f1;">Click below to receive a password reset link via email.</p>
         <button type="submit" id="password-submit">
-          <i class="fas fa-paper-plane"></i> Send Verification Code
-        </button>
-      </form>
-      <form id="verify-code-form" style="
-        display: none;
-        flex-direction: column;
-        gap: 1rem;
-      ">
-        <input type="hidden" id="userId" name="userId" value="<%= typeof userId !== 'undefined' ? userId : '' %>">
-        <input type="hidden" id="newPassword" name="newPassword">
-        <label for="code" style="color: #ecf0f1;">Verification Code</label>
-        <input type="text" id="code" name="code" value="<%= typeof code !== 'undefined' ? code : '' %>" aria-label="Verification Code" required>
-        <button type="submit" id="verify-submit">
-          <i class="fas fa-check"></i> Verify and Update
+          <i class="fas fa-paper-plane"></i> Send Password Reset Link
         </button>
       </form>
     </div>
@@ -236,10 +217,8 @@
       const closePrivacySecurity = document.querySelector('.close-privacy-security');
       const overlay = document.querySelector('.popup-overlay');
       const passwordForm = document.querySelector('#password-form');
-      const verifyCodeForm = document.querySelector('#verify-code-form');
       const passwordMessage = document.querySelector('#password-message');
       const passwordSubmit = document.querySelector('#password-submit');
-      const verifySubmit = document.querySelector('#verify-submit');
 
       const showPopup = (popup) => {
         if (popup) {
@@ -265,10 +244,8 @@
         button.disabled = isLoading;
         button.style.opacity = isLoading ? '0.7' : '1';
         button.innerHTML = isLoading
-          ? '<i class="fas fa-spinner fa-spin"></i> Loading...'
-          : button.id === 'password-submit'
-            ? '<i class="fas fa-paper-plane"></i> Send Verification Code'
-            : '<i class="fas fa-check"></i> Verify and Update';
+          ? '<i class="fas fa-spinner fa-spin"></i> Sending...'
+          : '<i class="fas fa-paper-plane"></i> Send Password Reset Link';
       };
 
       if (updateProfileBtn && updateProfilePopup) {
@@ -281,10 +258,7 @@
       if (privacySecurityBtn && privacySecurityPopup) {
         privacySecurityBtn.addEventListener('click', () => {
           passwordForm.style.display = 'flex';
-          verifyCodeForm.style.display = 'none';
           passwordMessage.style.display = 'none';
-          document.querySelector('#password').value = '';
-          document.querySelector('#confirmPassword').value = '';
           showPopup(privacySecurityPopup);
         });
       }
@@ -304,81 +278,27 @@
         }
       });
 
-      // Show verification popup if arriving from verification link
-      const showVerifyCodePopup = <%= typeof showVerifyCodePopup !== 'undefined' && showVerifyCodePopup ? 'true' : 'false' %>;
-      if (showVerifyCodePopup && privacySecurityPopup) {
-        passwordForm.style.display = 'none';
-        verifyCodeForm.style.display = 'flex';
-        showPopup(privacySecurityPopup);
-      }
-
-      if (passwordForm && verifyCodeForm) {
+      if (passwordForm) {
         passwordForm.addEventListener('submit', async (e) => {
           e.preventDefault();
-          const password = document.querySelector('#password').value;
-          const confirmPassword = document.querySelector('#confirmPassword').value;
-          if (password.length < 8) {
-            showMessage('Password must be at least 8 characters', 'error');
-            return;
-          }
-          if (password !== confirmPassword) {
-            showMessage('Passwords do not match', 'error');
-            return;
-          }
           setLoading(passwordSubmit, true);
           try {
             const response = await fetch('/settings/request-password-reset', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ password, confirmPassword }),
+              body: JSON.stringify({}),
             });
             const data = await response.json();
             setLoading(passwordSubmit, false);
             if (data.success) {
-              document.querySelector('#newPassword').value = password;
-              document.querySelector('#userId').value = data.userId || '';
-              document.querySelector('#code').value = data.resetToken || '';
-              passwordForm.style.display = 'none';
-              verifyCodeForm.style.display = 'flex';
-              showMessage('Verification code sent to your email', 'success');
+              showMessage('Password reset link sent to your email', 'success');
+              setTimeout(() => hidePopup(privacySecurityPopup), 2000);
             } else {
-              showMessage(data.error || 'Error sending verification code', 'error');
+              showMessage(data.error || 'Error sending password reset link', 'error');
             }
           } catch (err) {
             setLoading(passwordSubmit, false);
-            showMessage('Error sending verification code', 'error');
-          }
-        });
-
-        verifyCodeForm.addEventListener('submit', async (e) => {
-          e.preventDefault();
-          const code = document.querySelector('#code').value;
-          const userId = document.querySelector('#userId').value;
-          const newPassword = document.querySelector('#newPassword').value;
-          if (!code || !userId) {
-            showMessage('Please provide a valid verification code', 'error');
-            return;
-          }
-          setLoading(verifySubmit, true);
-          try {
-            const response = await fetch('/settings/verify-password-reset', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ userId, code, password: newPassword }),
-            });
-            const data = await response.json();
-            setLoading(verifySubmit, false);
-            if (data.success) {
-              showMessage('Password updated successfully', 'success');
-              setTimeout(() => {
-                window.location.href = '/settings?success_msg=Password updated successfully';
-              }, 2000);
-            } else {
-              showMessage(data.error || 'Invalid or expired verification code', 'error');
-            }
-          } catch (err) {
-            setLoading(verifySubmit, false);
-            showMessage('Invalid or expired verification code', 'error');
+            showMessage('Error sending password reset link', 'error');
           }
         });
       }
