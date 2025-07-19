@@ -1,402 +1,218 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Settings | Blogify</title>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
-  <style>
-    body {
-      background-color: #1a2634;
-      color: #ecf0f1;
-      margin: 0;
-      font-family: 'Arial', sans-serif;
-    }
-    .container {
-      max-width: 800px;
-      margin: 2rem auto;
-      padding: 2rem;
-      background-color: #2c3e50;
-      border-radius: 8px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-    }
-    .settings-section {
-      margin-bottom: 2rem;
-    }
-    .settings-section h2 {
-      font-size: 1.5rem;
-      margin-bottom: 1rem;
-      color: #ecf0f1;
-    }
-    .settings-action {
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-      padding: 1rem;
-      background-color: #34495e;
-      border-radius: 4px;
-      cursor: pointer;
-      transition: background-color 0.3s;
-    }
-    .settings-action:hover {
-      background-color: #3e5a75;
-    }
-    .settings-action.delete-account-btn {
-      background-color: #e74c3c;
-    }
-    .settings-action.delete-account-btn:hover {
-      background-color: #c0392b;
-    }
-    .popup {
-      display: none;
-      position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      background-color: #2c3e50;
-      padding: 2rem;
-      border-radius: 8px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-      z-index: 2000;
-      max-width: 400px;
-      width: 90%;
-      max-height: 80vh;
-      overflow-y: auto;
-      animation: fadeIn 0.3s ease-in-out;
-    }
-    .popup-overlay {
-      display: none;
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background-color: rgba(0, 0, 0, 0.5);
-      z-index: 1500;
-    }
-    .close-btn {
-      position: absolute;
-      top: 10px;
-      right: 10px;
-      background: none;
-      border: none;
-      color: #ecf0f1;
-      font-size: 1.2rem;
-      cursor: pointer;
-    }
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translate(-50%, -60%); }
-      to { opacity: 1; transform: translate(-50%, -50%); }
-    }
-    input, textarea {
-      padding: 0.75rem;
-      border: 1px solid #34495e;
-      border-radius: 4px;
-      font-size: 1rem;
-      background-color: #34495e;
-      color: #ecf0f1;
-      width: 100%;
-      transition: border-color 0.3s;
-    }
-    input:focus, textarea:focus {
-      border-color: #3498db;
-    }
-    button {
-      padding: 0.75rem;
-      background-color: #3498db;
-      color: #ecf0f1;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 1rem;
-      transition: background-color 0.3s, transform 0.2s;
-    }
-    button.delete-btn {
-      background-color: #e74c3c;
-    }
-    button.delete-btn:hover {
-      background-color: #c0392b;
-      transform: scale(1.05);
-    }
-    button:hover {
-      background-color: #2980b9;
-      transform: scale(1.05);
-    }
-    button:disabled {
-      background-color: #7f8c8d;
-      cursor: not-allowed;
-      transform: none;
-    }
-    .message {
-      display: none;
-      padding: 0.75rem;
-      margin-bottom: 1rem;
-      border-radius: 4px;
-      font-size: 0.9rem;
-    }
-    .success {
-      background-color: #d4edda;
-      color: #155724;
-    }
-    .error {
-      background-color: #f8d7da;
-      color: #721c24;
-    }
-    @media (max-width: 768px) {
-      .container { margin: 1rem; padding: 1rem; }
-      .popup { width: 95%; }
-    }
-  </style>
-</head>
-<body>
-  <%- include('partials/header', { user }) %>
+const { Router } = require("express");
+const { randomBytes, createHmac } = require("crypto");
+const User = require("../models/user");
+const Blog = require("../models/blog");
+const Comment = require("../models/comments");
+const Notification = require("../models/notification");
+const { sendEmail } = require("../middlewares/nodemailer");
+const cloudinaryUpload = require("../middlewares/cloudinaryUpload");
+const { createTokenForUser } = require("../services/authentication");
 
-  <div class="container">
-    <% if (success_msg) { %>
-      <p class="message success" style="display: block;">
-        <i class="fas fa-check-circle"></i> <%= success_msg %>
-      </p>
-    <% } %>
-    <% if (error_msg) { %>
-      <p class="message error" style="display: block;">
-        <i class="fas fa-exclamation-circle"></i> <%= error_msg %>
-      </p>
-    <% } %>
+const router = Router();
 
-    <div class="settings-section">
-      <h2>Settings</h2>
-      <div class="settings-action update-profile-btn">
-        <i class="fas fa-user-edit"></i>
-        <span>Update Profile</span>
-      </div>
-      <div class="settings-action privacy-security-btn">
-        <i class="fas fa-shield-alt"></i>
-        <span>Privacy/Security</span>
-      </div>
-      <div class="settings-action delete-account-btn">
-        <i class="fas fa-trash-alt"></i>
-        <span>Delete Account</span>
-      </div>
-    </div>
+// GET /settings
+router.get("/", (req, res) => {
+  if (!req.user) {
+    return res.redirect("/user/signin?error_msg=Please log in to view settings");
+  }
+  return res.render("settings", {
+    user: req.user,
+    success_msg: req.query.success_msg,
+    error_msg: req.query.error_msg,
+  });
+});
 
-    <!-- Update Profile Popup -->
-    <div class="popup update-profile-popup">
-      <h3 style="color: #ecf0f1; margin-bottom: 1rem;">Update Profile</h3>
-      <button class="close-btn close-update-profile" aria-label="Close Update Profile Popup">
-        <i class="fas fa-times"></i>
-      </button>
-      <form action="/settings/update-profile" method="POST" enctype="multipart/form-data" style="
-        display: flex;
-        flex-direction: column;
-        gap: 1rem;
-      ">
-        <label for="fullname" style="color: #ecf0f1;">Username</label>
-        <input type="text" id="fullname" name="fullname" value="<%= user.fullname %>" aria-label="Username" required>
-        <label for="bio" style="color: #ecf0f1;">Bio</label>
-        <textarea id="bio" name="bio" aria-label="Bio" style="resize: vertical; min-height: 100px;"><%= user.bio || '' %></textarea>
-        <label for="profileImage" style="color: #ecf0f1;">Profile Image</label>
-        <input type="file" id="profileImage" name="profileImage" accept="image/*" aria-label="Profile Image">
-        <button type="submit">
-          <i class="fas fa-save"></i> Update Profile
-        </button>
-      </form>
-    </div>
+// POST /settings/update-profile
+router.post("/update-profile", cloudinaryUpload.single("profileImage"), async (req, res) => {
+  try {
+    if (!req.user) {
+      return res.redirect("/user/signin?error_msg=Please log in to update your profile");
+    }
 
-    <!-- Privacy/Security Popup -->
-    <div class="popup privacy-security-popup">
-      <h3 style="color: #ecf0f1; margin-bottom: 1rem;">Request Password Reset</h3>
-      <button class="close-btn close-privacy-security" aria-label="Close Privacy/Security Popup">
-        <i class="fas fa-times"></i>
-      </button>
-      <p id="password-message" class="message" aria-live="polite"></p>
-      <form id="password-form" style="
-        display: flex;
-        flex-direction: column;
-        gap: 1rem;
-      ">
-        <p style="color: #ecf0f1;">Click below to receive a password reset link via email.</p>
-        <button type="submit" id="password-submit">
-          <i class="fas fa-paper-plane"></i> Send Password Reset Link
-        </button>
-      </form>
-    </div>
+    const { fullname, bio } = req.body;
+    const update = {};
 
-    <!-- Delete Account Popup -->
-    <div class="popup delete-account-popup">
-      <h3 style="color: #ecf0f1; margin-bottom: 1rem;">Delete Account</h3>
-      <button class="close-btn close-delete-account" aria-label="Close Delete Account Popup">
-        <i class="fas fa-times"></i>
-      </button>
-      <p id="delete-message" class="message" aria-live="polite"></p>
-      <form id="delete-account-form" style="
-        display: flex;
-        flex-direction: column;
-        gap: 1rem;
-      ">
-        <p style="color: #ecf0f1;">Enter your password to confirm account deletion. This action is irreversible.</p>
-        <label for="delete-password" style="color: #ecf0f1;">Password</label>
-        <input type="password" id="delete-password" name="password" aria-label="Password" required>
-        <button type="submit" id="delete-submit" class="delete-btn">
-          <i class="fas fa-trash-alt"></i> Delete Account
-        </button>
-      </form>
-    </div>
-
-    <div class="popup-overlay"></div>
-  </div>
-
-  <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      const updateProfileBtn = document.querySelector('.update-profile-btn');
-      const privacySecurityBtn = document.querySelector('.privacy-security-btn');
-      const deleteAccountBtn = document.querySelector('.delete-account-btn');
-      const updateProfilePopup = document.querySelector('.update-profile-popup');
-      const privacySecurityPopup = document.querySelector('.privacy-security-popup');
-      const deleteAccountPopup = document.querySelector('.delete-account-popup');
-      const closeUpdateProfile = document.querySelector('.close-update-profile');
-      const closePrivacySecurity = document.querySelector('.close-privacy-security');
-      const closeDeleteAccount = document.querySelector('.close-delete-account');
-      const overlay = document.querySelector('.popup-overlay');
-      const passwordForm = document.querySelector('#password-form');
-      const passwordMessage = document.querySelector('#password-message');
-      const passwordSubmit = document.querySelector('#password-submit');
-      const deleteAccountForm = document.querySelector('#delete-account-form');
-      const deleteMessage = document.querySelector('#delete-message');
-      const deleteSubmit = document.querySelector('#delete-submit');
-
-      const showPopup = (popup) => {
-        if (popup) {
-          popup.style.display = 'block';
-          overlay.style.display = 'block';
-          const focusableEls = popup.querySelectorAll('a, button, input, textarea');
-          if (focusableEls.length > 0) focusableEls[0].focus();
-        }
-      };
-
-      const hidePopup = (popup) => {
-        if (popup) popup.style.display = 'none';
-        overlay.style.display = 'none';
-      };
-
-      const showMessage = (element, message, type) => {
-        element.textContent = message;
-        element.className = `message ${type}`;
-        element.style.display = 'block';
-      };
-
-      const setLoading = (button, isLoading) => {
-        button.disabled = isLoading;
-        button.style.opacity = isLoading ? '0.7' : '1';
-        button.innerHTML = isLoading
-          ? '<i class="fas fa-spinner fa-spin"></i> Processing...'
-          : button.classList.contains('delete-btn')
-          ? '<i class="fas fa-trash-alt"></i> Delete Account'
-          : '<i class="fas fa-paper-plane"></i> Send Password Reset Link';
-      };
-
-      // Update Profile Popup
-      if (updateProfileBtn && updateProfilePopup) {
-        updateProfileBtn.addEventListener('click', () => showPopup(updateProfilePopup));
+    if (fullname?.trim()) {
+      if (fullname.trim().length < 2) {
+        return res.redirect("/settings?error_msg=Username must be at least 2 characters");
       }
-      if (closeUpdateProfile && updateProfilePopup) {
-        closeUpdateProfile.addEventListener('click', () => hidePopup(updateProfilePopup));
-      }
+      update.fullname = fullname.trim();
+    }
 
-      // Privacy/Security Popup
-      if (privacySecurityBtn && privacySecurityPopup) {
-        privacySecurityBtn.addEventListener('click', () => {
-          passwordForm.style.display = 'flex';
-          passwordMessage.style.display = 'none';
-          showPopup(privacySecurityPopup);
-        });
-      }
-      if (closePrivacySecurity && privacySecurityPopup) {
-        closePrivacySecurity.addEventListener('click', () => hidePopup(privacySecurityPopup));
-      }
+    if (bio?.trim()) {
+      update.bio = bio.trim();
+    }
 
-      // Delete Account Popup
-      if (deleteAccountBtn && deleteAccountPopup) {
-        deleteAccountBtn.addEventListener('click', () => {
-          deleteAccountForm.style.display = 'flex';
-          deleteMessage.style.display = 'none';
-          showPopup(deleteAccountPopup);
-        });
-      }
-      if (closeDeleteAccount && deleteAccountPopup) {
-        closeDeleteAccount.addEventListener('click', () => hidePopup(deleteAccountPopup));
-      }
+    if (req.file) {
+      update.profileImageURL = req.file.path; // Cloudinary URL
+    }
 
-      // Overlay and Escape Key Handling
-      overlay.addEventListener('click', () => {
-        hidePopup(updateProfilePopup);
-        hidePopup(privacySecurityPopup);
-        hidePopup(deleteAccountPopup);
-      });
+    if (!Object.keys(update).length) {
+      return res.redirect("/settings?error_msg=No changes provided");
+    }
 
-      window.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') {
-          hidePopup(updateProfilePopup);
-          hidePopup(privacySecurityPopup);
-          hidePopup(deleteAccountPopup);
-        }
-      });
+    const updatedUser = await User.findByIdAndUpdate(req.user._id, update, { new: true });
+    if (!updatedUser) return res.redirect("/settings?error_msg=User not found");
 
-      // Password Reset Form Submission
-      if (passwordForm) {
-        passwordForm.addEventListener('submit', async (e) => {
-          e.preventDefault();
-          setLoading(passwordSubmit, true);
-          try {
-            const response = await fetch('/settings/request-password-reset', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({}),
-            });
-            const data = await response.json();
-            setLoading(passwordSubmit, false);
-            if (data.success) {
-              showMessage(passwordMessage, 'Password reset link sent to your email', 'success');
-              setTimeout(() => hidePopup(privacySecurityPopup), 2000);
-            } else {
-              showMessage(passwordMessage, data.error || 'Error sending password reset link', 'error');
-            }
-          } catch (err) {
-            setLoading(passwordSubmit, false);
-            showMessage(passwordMessage, 'Error sending password reset link', 'error');
-          }
-        });
-      }
+    const token = createTokenForUser(updatedUser);
+    res.cookie("token", token, { httpOnly: true });
+    return res.redirect("/settings?success_msg=Profile updated successfully");
+  } catch (err) {
+    console.error("Error updating profile:", err);
+    return res.redirect("/settings?error_msg=Failed to update profile");
+  }
+});
 
-      // Delete Account Form Submission
-      if (deleteAccountForm) {
-        deleteAccountForm.addEventListener('submit', async (e) => {
-          e.preventDefault();
-          setLoading(deleteSubmit, true);
-          const password = document.querySelector('#delete-password').value;
+// POST /settings/request-password-reset
+router.post("/request-password-reset", async (req, res) => {
+  try {
+    if (!req.user) {
+      return res.json({ success: false, error: "Please log in" });
+    }
 
-          try {
-            const response = await fetch('/settings/delete-account', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ password }),
-            });
-            const data = await response.json();
-            setLoading(deleteSubmit, false);
-            if (data.success) {
-              showMessage(deleteMessage, 'Account deleted successfully. Redirecting...', 'success');
-              setTimeout(() => {
-                window.location.href = '/?success_msg=Account deleted successfully';
-              }, 2000);
-            } else {
-              showMessage(deleteMessage, data.error || 'Error deleting account', 'error');
-            }
-          } catch (err) {
-            setLoading(deleteSubmit, false);
-            showMessage(deleteMessage, 'Error deleting account', 'error');
-          }
-        });
-      }
+    const user = await User.findById(req.user._id);
+    if (!user) {
+      return res.json({ success: false, error: "User not found" });
+    }
+
+    const resetToken = randomBytes(32).toString("hex");
+    user.resetPasswordToken = resetToken;
+    user.resetPasswordExpires = Date.now() + 3600000; // 1 hour expiry
+    await user.save();
+
+    const resetUrl = `http://${req.headers.host}/settings/reset-password/${user._id}/${resetToken}`;
+    await sendEmail({
+      to: user.email,
+      subject: "Blogify Password Reset",
+      html: `
+        <h2>Reset Your Blogify Password</h2>
+        <p>Please click the link below to reset your password:</p>
+        <a href="${resetUrl}">Reset Password</a>
+        <p>This link expires in 1 hour.</p>
+      `,
     });
-  </script>
-</body>
-</html>
+
+    return res.json({ success: true, message: "Password reset link sent to your email" });
+  } catch (error) {
+    console.error("Error sending reset link:", error);
+    return res.json({ success: false, error: "Failed to send password reset link" });
+  }
+});
+
+// GET /settings/reset-password/:userId/:token
+router.get("/reset-password/:userId/:token", async (req, res) => {
+  try {
+    const { userId, token } = req.params;
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.redirect("/settings?error_msg=User not found");
+    }
+    if (user.resetPasswordToken !== token) {
+      return res.redirect("/settings?error_msg=Invalid reset link");
+    }
+    if (user.resetPasswordExpires < Date.now()) {
+      return res.redirect("/settings?error_msg=Reset link expired");
+    }
+
+    return res.render("profile-reset-password", {
+      userId,
+      token,
+      success_msg: null,
+      error_msg: null,
+    });
+  } catch (error) {
+    console.error("Error in reset-password GET:", error);
+    return res.redirect("/settings?error_msg=Failed to validate reset link");
+  }
+});
+
+// POST /settings/reset-password
+router.post("/reset-password", async (req, res) => {
+  try {
+    const { userId, token, password, confirmPassword } = req.body;
+    if (password.length < 8) {
+      return res.render("profile-reset-password", {
+        userId,
+        token,
+        success_msg: null,
+        error_msg: "Password must be at least 8 characters",
+      });
+    }
+    if (password !== confirmPassword) {
+      return res.render("profile-reset-password", {
+        userId,
+        token,
+        success_msg: null,
+        error_msg: "Passwords do not match",
+      });
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.redirect("/settings?error_msg=User not found");
+    }
+    if (user.resetPasswordToken !== token) {
+      return res.redirect("/settings?error_msg=Invalid reset link");
+    }
+    if (user.resetPasswordExpires < Date.now()) {
+      return res.redirect("/settings?error_msg=Reset link expired");
+    }
+
+    user.password = password; // Password will be hashed in pre-save hook
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpires = undefined;
+    await user.save();
+
+    const tokenJwt = createTokenForUser(user);
+    res.cookie("token", tokenJwt, { httpOnly: true });
+    return res.redirect("/settings?success_msg=Password updated successfully");
+  } catch (error) {
+    console.error("Error resetting password:", error);
+    return res.render("profile-reset-password", {
+      userId: req.body.userId,
+      token: req.body.token,
+      success_msg: null,
+      error_msg: "Failed to reset password",
+    });
+  }
+});
+
+// POST /settings/delete-account
+router.post("/delete-account", async (req, res) => {
+  try {
+    if (!req.user) {
+      return res.json({ success: false, error: "Please log in" });
+    }
+
+    const { password } = req.body;
+    const user = await User.findById(req.user._id);
+    if (!user) {
+      return res.json({ success: false, error: "User not found" });
+    }
+
+    // Verify password
+    const userProvidedHash = createHmac("sha256", user.salt)
+      .update(password)
+      .digest("hex");
+    if (userProvidedHash !== user.password) {
+      return res.json({ success: false, error: "Incorrect password" });
+    }
+
+    // Delete user and related data
+    await Promise.all([
+      User.findByIdAndDelete(user._id),
+      Blog.deleteMany({ createdBy: user._id }),
+      Comment.deleteMany({ createdBy: user._id }),
+      Notification.deleteMany({ $or: [{ sender: user._id }, { recipient: user._id }] }),
+    ]);
+
+    // Clear the authentication cookie
+    res.clearCookie("token");
+    return res.json({ success: true, message: "Account deleted successfully" });
+  } catch (error) {
+    console.error("Error deleting account:", error);
+    return res.json({ success: false, error: "Failed to delete account" });
+  }
+});
+
+module.exports = router;
