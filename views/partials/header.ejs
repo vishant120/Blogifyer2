@@ -9,74 +9,105 @@
       margin: 0;
       padding: 0;
       box-sizing: border-box;
-      font-family: 'Arial', sans-serif;
+      font-family: 'Segoe UI', Arial, sans-serif;
+    }
+
+    :root {
+      --primary-color: #3498db;
+      --secondary-color: #2c3e50;
+      --dark-bg: #1a1a1a;
+      --card-bg: #2a2a2a;
+      --text-primary: #ffffff;
+      --text-secondary: #b0b0b0;
+      --border-color: #404040;
+      --hover-color: #3a3a3a;
     }
 
     header {
-      background-color: #2c3e50;
-      color: white;
+      background-color: var(--secondary-color);
       padding: 1rem;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+      border-bottom: 1px solid var(--border-color);
+      position: sticky;
+      top: 0;
+      z-index: 1000;
     }
 
     nav {
+      max-width: 1200px;
+      margin: 0 auto;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      max-width: 1200px;
-      margin: 0 auto;
       flex-wrap: wrap;
     }
 
     nav a.logo {
-      color: white;
+      color: var(--primary-color);
       text-decoration: none;
-      font-size: 1.5rem;
+      font-size: 1.8rem;
       font-weight: bold;
-    }
-
-    nav ul {
-      list-style: none;
       display: flex;
-      gap: 1.5rem;
-    }
-
-    nav ul li a {
-      color: white;
-      font-size: 1rem;
-      text-decoration: none;
+      align-items: center;
+      gap: 0.5rem;
       transition: color 0.3s;
     }
 
-    nav ul li a:hover {
-      color: #3498db;
+    nav a.logo:hover {
+      color: #2980b9;
+    }
+
+    nav ul.main-nav {
+      list-style: none;
+      display: flex;
+      gap: 2rem;
+      align-items: center;
+    }
+
+    nav ul.main-nav li a {
+      color: var(--text-primary);
+      text-decoration: none;
+      font-size: 1rem;
+      transition: color 0.3s;
+    }
+
+    nav ul.main-nav li a:hover {
+      color: var(--primary-color);
     }
 
     nav form {
       display: flex;
       gap: 0.5rem;
+      align-items: center;
     }
 
     nav form input {
-      padding: 0.5rem;
-      border: none;
-      border-radius: 4px;
-      font-size: 1rem;
+      padding: 0.5rem 1rem;
+      background-color: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      color: var(--text-primary);
+      font-size: 0.9rem;
+      transition: border-color 0.3s;
+    }
+
+    nav form input:focus {
+      outline: none;
+      border-color: var(--primary-color);
     }
 
     nav form button {
       padding: 0.5rem 1rem;
-      background-color: #3498db;
+      background-color: var(--primary-color);
       border: none;
-      border-radius: 4px;
-      color: white;
+      border-radius: 8px;
+      color: var(--text-primary);
       cursor: pointer;
-      transition: background-color 0.3s, box-shadow 0.3s;
+      transition: background-color 0.3s, transform 0.2s;
     }
 
     nav form button:hover {
       background-color: #2980b9;
-      box-shadow: 0 0 10px rgba(52, 152, 219, 0.5);
+      transform: scale(1.05);
     }
 
     .hamburger {
@@ -84,52 +115,78 @@
       font-size: 1.5rem;
       background: none;
       border: none;
-      color: white;
+      color: var(--text-primary);
       cursor: pointer;
+      transition: color 0.3s;
+    }
+
+    .hamburger:hover {
+      color: var(--primary-color);
     }
 
     .dropdown {
       position: relative;
-      display: inline-block;
     }
 
     .dropdown-toggle {
       background: none;
       border: none;
-      color: white;
+      color: var(--text-primary);
       font-size: 1rem;
       cursor: pointer;
       display: flex;
       align-items: center;
       gap: 0.5rem;
+      padding: 0.5rem;
+      border-radius: 50px;
+      transition: background-color 0.3s;
+    }
+
+    .dropdown-toggle:hover {
+      background-color: var(--hover-color);
+    }
+
+    .dropdown-toggle img {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      object-fit: cover;
     }
 
     .dropdown-menu {
-      display: none;
       position: absolute;
       top: 100%;
       right: 0;
-      background-color: #34495e;
-      border-radius: 4px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-      min-width: 150px;
-      z-index: 1000;
+      background-color: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+      min-width: 200px;
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(-10px);
+      transition: all 0.3s ease;
+      z-index: 1001;
     }
 
     .dropdown-menu.active {
-      display: block;
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0);
     }
 
     .dropdown-menu a {
-      display: block;
-      padding: 0.75rem;
-      color: white;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.75rem 1rem;
+      color: var(--text-primary);
       text-decoration: none;
       transition: background-color 0.3s;
     }
 
     .dropdown-menu a:hover {
-      background-color: #3498db;
+      background-color: var(--hover-color);
     }
 
     @media (max-width: 768px) {
@@ -137,11 +194,12 @@
         display: none;
         flex-direction: column;
         width: 100%;
-        background-color: #34495e;
+        background-color: var(--card-bg);
         padding: 1rem;
         position: absolute;
         top: 60px;
         left: 0;
+        border-bottom: 1px solid var(--border-color);
       }
 
       nav ul.main-nav.active {
@@ -166,6 +224,24 @@
         right: 0;
       }
     }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: var(--dark-bg);
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--border-color);
+      border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--text-secondary);
+    }
   </style>
   <script>
     document.addEventListener('DOMContentLoaded', () => {
@@ -185,7 +261,6 @@
           dropdownMenu.classList.toggle('active');
         });
 
-        // Close dropdown when clicking outside
         document.addEventListener('click', (e) => {
           if (!dropdownToggle.contains(e.target) && !dropdownMenu.contains(e.target)) {
             dropdownMenu.classList.remove('active');
@@ -212,8 +287,9 @@
       <% if (user) { %>
         <div class="dropdown">
           <button class="dropdown-toggle">
-            <img src="<%= user.profileImageURL %>" alt="Profile" style="width: 30px; height: 30px; border-radius: 50%; margin-right: 0.5rem;">
+            <img src="<%= user.profileImageURL %>" alt="Profile" class="profile-avatar">
             <%= user.fullname %>
+            <i class="fas fa-chevron-down"></i>
           </button>
           <div class="dropdown-menu">
             <a href="/profile"><i class="fas fa-user"></i> Profile</a>
