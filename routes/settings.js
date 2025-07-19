@@ -111,7 +111,7 @@ router.get("/reset-password/:userId/:token", async (req, res) => {
       return res.redirect("/settings?error_msg=Reset link expired");
     }
 
-    return res.render("reset-password", {
+    return res.render("profile-reset-password", {
       userId,
       token,
       success_msg: null,
@@ -128,7 +128,7 @@ router.post("/reset-password", async (req, res) => {
   try {
     const { userId, token, password, confirmPassword } = req.body;
     if (password.length < 8) {
-      return res.render("reset-password", {
+      return res.render("profile-reset-password", {
         userId,
         token,
         success_msg: null,
@@ -136,7 +136,7 @@ router.post("/reset-password", async (req, res) => {
       });
     }
     if (password !== confirmPassword) {
-      return res.render("reset-password", {
+      return res.render("profile-reset-password", {
         userId,
         token,
         success_msg: null,
@@ -165,7 +165,7 @@ router.post("/reset-password", async (req, res) => {
     return res.redirect("/settings?success_msg=Password updated successfully");
   } catch (error) {
     console.error("Error resetting password:", error);
-    return res.render("reset-password", {
+    return res.render("profile-reset-password", {
       userId: req.body.userId,
       token: req.body.token,
       success_msg: null,
