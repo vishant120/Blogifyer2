@@ -41,6 +41,12 @@
     .settings-action:hover {
       background-color: #3e5a75;
     }
+    .settings-action.delete-account-btn {
+      background-color: #e74c3c;
+    }
+    .settings-action.delete-account-btn:hover {
+      background-color: #c0392b;
+    }
     .popup {
       display: none;
       position: fixed;
@@ -105,6 +111,13 @@
       font-size: 1rem;
       transition: background-color 0.3s, transform 0.2s;
     }
+    button.delete-btn {
+      background-color: #e74c3c;
+    }
+    button.delete-btn:hover {
+      background-color: #c0392b;
+      transform: scale(1.05);
+    }
     button:hover {
       background-color: #2980b9;
       transform: scale(1.05);
@@ -160,6 +173,10 @@
         <i class="fas fa-shield-alt"></i>
         <span>Privacy/Security</span>
       </div>
+      <div class="settings-action delete-account-btn">
+        <i class="fas fa-trash-alt"></i>
+        <span>Delete Account</span>
+      </div>
     </div>
 
     <!-- Update Profile Popup -->
@@ -204,6 +221,27 @@
       </form>
     </div>
 
+    <!-- Delete Account Popup -->
+    <div class="popup delete-account-popup">
+      <h3 style="color: #ecf0f1; margin-bottom: 1rem;">Delete Account</h3>
+      <button class="close-btn close-delete-account" aria-label="Close Delete Account Popup">
+        <i class="fas fa-times"></i>
+      </button>
+      <p id="delete-message" class="message" aria-live="polite"></p>
+      <form id="delete-account-form" style="
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+      ">
+        <p style="color: #ecf0f1;">Enter your password to confirm account deletion. This action is irreversible.</p>
+        <label for="delete-password" style="color: #ecf0f1;">Password</label>
+        <input type="password" id="delete-password" name="password" aria-label="Password" required>
+        <button type="submit" id="delete-submit" class="delete-btn">
+          <i class="fas fa-trash-alt"></i> Delete Account
+        </button>
+      </form>
+    </div>
+
     <div class="popup-overlay"></div>
   </div>
 
@@ -211,14 +249,20 @@
     document.addEventListener('DOMContentLoaded', () => {
       const updateProfileBtn = document.querySelector('.update-profile-btn');
       const privacySecurityBtn = document.querySelector('.privacy-security-btn');
+      const deleteAccountBtn = document.querySelector('.delete-account-btn');
       const updateProfilePopup = document.querySelector('.update-profile-popup');
       const privacySecurityPopup = document.querySelector('.privacy-security-popup');
+      const deleteAccountPopup = document.querySelector('.delete-account-popup');
       const closeUpdateProfile = document.querySelector('.close-update-profile');
       const closePrivacySecurity = document.querySelector('.close-privacy-security');
+      const closeDeleteAccount = document.querySelector('.close-delete-account');
       const overlay = document.querySelector('.popup-overlay');
       const passwordForm = document.querySelector('#password-form');
       const passwordMessage = document.querySelector('#password-message');
       const passwordSubmit = document.querySelector('#password-submit');
+      const deleteAccountForm = document.querySelector('#delete-account-form');
+      const deleteMessage = document.querySelector('#delete-message');
+      const deleteSubmit = document.querySelector('#delete-submit');
 
       const showPopup = (popup) => {
         if (popup) {
@@ -234,20 +278,23 @@
         overlay.style.display = 'none';
       };
 
-      const showMessage = (message, type) => {
-        passwordMessage.textContent = message;
-        passwordMessage.className = `message ${type}`;
-        passwordMessage.style.display = 'block';
+      const showMessage = (element, message, type) => {
+        element.textContent = message;
+        element.className = `message ${type}`;
+        element.style.display = 'block';
       };
 
       const setLoading = (button, isLoading) => {
         button.disabled = isLoading;
         button.style.opacity = isLoading ? '0.7' : '1';
         button.innerHTML = isLoading
-          ? '<i class="fas fa-spinner fa-spin"></i> Sending...'
+          ? '<i class="fas fa-spinner fa-spin"></i> Processing...'
+          : button.classList.contains('delete-btn')
+          ? '<i class="fas fa-trash-alt"></i> Delete Account'
           : '<i class="fas fa-paper-plane"></i> Send Password Reset Link';
       };
 
+      // Update Profile Popup
       if (updateProfileBtn && updateProfilePopup) {
         updateProfileBtn.addEventListener('click', () => showPopup(updateProfilePopup));
       }
@@ -255,6 +302,7 @@
         closeUpdateProfile.addEventListener('click', () => hidePopup(updateProfilePopup));
       }
 
+      // Privacy/Security Popup
       if (privacySecurityBtn && privacySecurityPopup) {
         privacySecurityBtn.addEventListener('click', () => {
           passwordForm.style.display = 'flex';
@@ -266,18 +314,34 @@
         closePrivacySecurity.addEventListener('click', () => hidePopup(privacySecurityPopup));
       }
 
+      // Delete Account Popup
+      if (deleteAccountBtn && deleteAccountPopup) {
+        deleteAccountBtn.addEventListener('click', () => {
+          deleteAccountForm.style.display = 'flex';
+          deleteMessage.style.display = 'none';
+          showPopup(deleteAccountPopup);
+        });
+      }
+      if (closeDeleteAccount && deleteAccountPopup) {
+        closeDeleteAccount.addEventListener('click', () => hidePopup(deleteAccountPopup));
+      }
+
+      // Overlay and Escape Key Handling
       overlay.addEventListener('click', () => {
         hidePopup(updateProfilePopup);
         hidePopup(privacySecurityPopup);
+        hidePopup(deleteAccountPopup);
       });
 
       window.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') {
           hidePopup(updateProfilePopup);
           hidePopup(privacySecurityPopup);
+          hidePopup(deleteAccountPopup);
         }
       });
 
+      // Password Reset Form Submission
       if (passwordForm) {
         passwordForm.addEventListener('submit', async (e) => {
           e.preventDefault();
@@ -291,14 +355,44 @@
             const data = await response.json();
             setLoading(passwordSubmit, false);
             if (data.success) {
-              showMessage('Password reset link sent to your email', 'success');
+              showMessage(passwordMessage, 'Password reset link sent to your email', 'success');
               setTimeout(() => hidePopup(privacySecurityPopup), 2000);
             } else {
-              showMessage(data.error || 'Error sending password reset link', 'error');
+              showMessage(passwordMessage, data.error || 'Error sending password reset link', 'error');
             }
           } catch (err) {
             setLoading(passwordSubmit, false);
-            showMessage('Error sending password reset link', 'error');
+            showMessage(passwordMessage, 'Error sending password reset link', 'error');
+          }
+        });
+      }
+
+      // Delete Account Form Submission
+      if (deleteAccountForm) {
+        deleteAccountForm.addEventListener('submit', async (e) => {
+          e.preventDefault();
+          setLoading(deleteSubmit, true);
+          const password = document.querySelector('#delete-password').value;
+
+          try {
+            const response = await fetch('/settings/delete-account', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ password }),
+            });
+            const data = await response.json();
+            setLoading(deleteSubmit, false);
+            if (data.success) {
+              showMessage(deleteMessage, 'Account deleted successfully. Redirecting...', 'success');
+              setTimeout(() => {
+                window.location.href = '/?success_msg=Account deleted successfully';
+              }, 2000);
+            } else {
+              showMessage(deleteMessage, data.error || 'Error deleting account', 'error');
+            }
+          } catch (err) {
+            setLoading(deleteSubmit, false);
+            showMessage(deleteMessage, 'Error deleting account', 'error');
           }
         });
       }
