@@ -1,111 +1,83 @@
 const { Router } = require("express");
 const Notification = require("../models/notification");
 const User = require("../models/user");
-
 const router = Router();
 
-// Utility to render notifications page
-const renderNotifications = (res, user, notifications, messages = {}) => {
-  return res.render("notifications", {
+const renderNotifications = (res, user, notifications, messages = {}) =>
+  res.render("notifications", {
     user: user || null,
     notifications,
     success_msg: messages.success_msg || null,
     error_msg: messages.error_msg || null,
   });
-};
 
-// GET /notification
 router.get("/", async (req, res) => {
   try {
-    if (!req.user) {
-      return res.redirect("/user/signin?error_msg=Please log in to view notifications");
-    }
-
+    if (!req.user) return res.redirect("/user/signin?error_msg=Login required");
     const notifications = await Notification.find({ recipient: req.user._id })
       .populate("sender", "fullname profileImageURL")
-      .populate("blogId", "title")
+      .populate("blogId", "title coverImage")
+      .populate("commentId", "content")
       .sort({ createdAt: -1 });
-
     renderNotifications(res, req.user, notifications, {
       success_msg: req.query.success_msg,
       error_msg: req.query.error_msg,
     });
   } catch (err) {
-    console.error("Error loading notifications:", err);
     renderNotifications(res, req.user, [], { error_msg: "Failed to load notifications" });
   }
 });
 
-// POST /notification/accept/:id
 router.post("/accept/:id", async (req, res) => {
   try {
-    if (!req.user) {
-      return res.redirect("/user/signin?error_msg=Please log in to accept follow requests");
-    }
-
-    const notification = await Notification.findById(req.params.id);
-    if (!notification || notification.recipient.toString() !== req.user._id.toString()) {
-      return res.redirect("/notification?error_msg=Notification not found or unauthorized");
-    }
-
-    if (notification.type !== "FOLLOW_REQUEST" || notification.status !== "PENDING") {
-      return res.redirect("/notification?error_msg=Invalid or already processed notification");
-    }
+    if (!req.user) return res.redirect("/user/signin?error_msg=Login required");
+    const notif = await Notification.findById(req.params.id);
+    if (!notif || notif.recipient.toString() !== req.user._id.toString())
+      return res.redirect("/notification?error_msg=Not found");
+    if (notif.type !== "FOLLOW_REQUEST" || notif.status !== "PENDING")
+      return res.redirect("/notification?error_msg=Invalid");
 
     await Promise.all([
-      User.findByIdAndUpdate(req.user._id, { $addToSet: { followers: notification.sender } }, { new: true }),
-      User.findByIdAndUpdate(notification.sender, { $addToSet: { following: req.user._id } }, { new: true }),
-      Notification.findByIdAndUpdate(req.params.id, { status: "ACCEPTED" }, { new: true }),
+      User.findByIdAndUpdate(req.user._id, { $addToSet: { followers: notif.sender } }),
+      User.findByIdAndUpdate(notif.sender, { $addToSet: { following: req.user._id } }),
+      Notification.findByIdAndUpdate(req.params.id, { status: "ACCEPTED" }),
     ]);
-
     return res.redirect("/notification?success_msg=Follow request accepted");
   } catch (err) {
-    console.error("Error accepting follow request:", err);
-    return res.redirect("/notification?error_msg=Failed to accept follow request");
+    res.redirect("/notification?error_msg=Failed to accept");
   }
 });
 
-// POST /notification/reject/:id
 router.post("/reject/:id", async (req, res) => {
   try {
-    if (!req.user) {
-      return res.redirect("/user/signin?error_msg=Please log in to reject follow requests");
-    }
-
-    const notification = await Notification.findById(req.params.id);
-    if (!notification || notification.recipient.toString() !== req.user._id.toString()) {
-      return res.redirect("/notification?error_msg=Notification not found or unauthorized");
-    }
-
-    if (notification.type !== "FOLLOW_REQUEST" || notification.status !== "PENDING") {
-      return res.redirect("/notification?error_msg=Invalid or already processed notification");
-    }
-
-    await Notification.findByIdAndUpdate(req.params.id, { status: "REJECTED" }, { new: true });
+    if (!req.user) return res.redirect("/user/signin?error_msg=Login required");
+    const notif = await Notification.findById(req.params.id);
+    if (!notif || notif.recipient.toString() !== req.user._id.toString())
+      return res.redirect("/notification?error_msg=Not found");
+    await Notification.findByIdAndUpdate(req.params.id, { status: "REJECTED" });
     return res.redirect("/notification?success_msg=Follow request rejected");
   } catch (err) {
-    console.error("Error rejecting follow request:", err);
-    return res.redirect("/notification?error_msg=Failed to reject follow request");
+    res.redirect("/notification?error_msg=Failed to reject");
   }
 });
 
-// POST /notification/read/:id
 router.post("/read/:id", async (req, res) => {
   try {
-    if (!req.user) {
-      return res.redirect("/user/signin?error_msg=Please log in to mark notifications as read");
-    }
-
-    const notification = await Notification.findById(req.params.id);
-    if (!notification || notification.recipient.toString() !== req.user._id.toString()) {
-      return res.redirect("/notification?error_msg=Notification not found or unauthorized");
-    }
-
-    await Notification.findByIdAndUpdate(req.params.id, { status: "READ" }, { new: true });
-    return res.redirect("/notification?success_msg=Notification marked as read");
+    if (!req.user) return res.redirect("/user/signin?error_msg=Login required");
+    await Notification.findByIdAndUpdate(req.params.id, { status: "READ" });
+    return res.redirect("/notification?success_msg=Marked as read");
   } catch (err) {
-    console.error("Error marking notification as read:", err);
-    return res.redirect("/notification?error_msg=Failed to mark notification as read");
+    res.redirect("/notification?error_msg=Failed to mark read");
+  }
+});
+
+router.delete("/:id", async (req, res) => {
+  try {
+    if (!req.user) return res.status(401).json({ error: "Login required" });
+    await Notification.findOneAndDelete({ _id: req.params.id, recipient: req.user._id });
+    return res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to delete" });
   }
 });
 
