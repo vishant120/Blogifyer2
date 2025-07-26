@@ -6,10 +6,11 @@ const notificationSchema = new Schema(
     sender: { type: Schema.Types.ObjectId, ref: "User", required: true },
     type: {
       type: String,
-      enum: ["FOLLOW_REQUEST", "LIKE"],
+      enum: ["FOLLOW_REQUEST", "LIKE", "COMMENT", "POST"],
       required: true,
     },
     blogId: { type: Schema.Types.ObjectId, ref: "Blog", default: null },
+    commentId: { type: Schema.Types.ObjectId, ref: "Comment", default: null },
     status: {
       type: String,
       enum: ["PENDING", "ACCEPTED", "REJECTED", "READ"],
