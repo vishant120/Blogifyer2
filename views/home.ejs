@@ -82,6 +82,35 @@
       object-fit: cover;
     }
 
+    .author-info {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .author-img {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+
+    .author-info a {
+      color: var(--primary-color);
+      text-decoration: none;
+      font-weight: bold;
+    }
+
+    .author-info a:hover {
+      text-decoration: underline;
+    }
+
+    .author-info span {
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+    }
+
     .blog-card h2 a {
       font-size: 1.5rem;
       color: var(--primary-color);
@@ -99,21 +128,12 @@
       line-height: 1.6;
     }
 
-    .blog-meta {
-      font-size: 0.9rem;
-      color: var(--text-secondary);
-      margin-bottom: 1rem;
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-    }
-
-    .blog-meta a {
+    .blog-excerpt a {
       color: var(--primary-color);
       text-decoration: none;
     }
 
-    .blog-meta a:hover {
+    .blog-excerpt a:hover {
       text-decoration: underline;
     }
 
@@ -303,15 +323,18 @@
 
     <% blogs.forEach(blog => { %>
       <div class="blog-card">
+        <div class="author-info">
+          <img src="<%= blog.createdBy.profileImageURL %>" alt="Profile Image" class="author-img">
+          <div>
+            <a href="/profile/<%= blog.createdBy._id %>"><%= blog.createdBy.fullname %></a>
+            <span><i class="fas fa-clock"></i> <%= moment(blog.createdAt).fromNow() %></span>
+          </div>
+        </div>
+        <h2><a href="/blog/<%= blog._id %>"><%= blog.title %></a></h2>
         <% if (blog.coverImage) { %>
           <img src="<%= blog.coverImage %>" alt="Cover Image">
         <% } %>
-        <h2><a href="/blog/<%= blog._id %>"><%= blog.title %></a></h2>
-        <p class="blog-excerpt"><%= blog.body.substring(0, 200) %>...</p>
-        <div class="blog-meta">
-          Posted by <a href="/profile/<%= blog.createdBy._id %>"><i class="fas fa-user"></i> <%= blog.createdBy.fullname %></a>
-          <i class="fas fa-clock"></i> <%= moment(blog.createdAt).fromNow() %>
-        </div>
+        <p class="blog-excerpt"><%= blog.body.substring(0, 200) %>... <a href="/blog/<%= blog._id %>">Read more</a></p>
         <div class="blog-actions">
           <% if (user) { %>
             <form action="/blog/<%= blog._id %>/like" method="POST">
@@ -327,9 +350,6 @@
               </button>
             </form>
           <% } %>
-          <a href="/blog/<%= blog._id %>" class="view-btn">
-            <i class="fas fa-eye"></i> View Post
-          </a>
           <button class="action-btn" onclick="showComments('<%= blog._id %>')">
             <i class="fas fa-comments"></i> View Comments (<%= blog.comments.length %>)
           </button>
