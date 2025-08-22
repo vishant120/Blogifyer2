@@ -6,8 +6,10 @@
   <title><%= blog.title %> | Blogify</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
 </head>
+
 <body style="background-color: #1a2634; color: #ecf0f1; margin: 0; font-family: 'Arial', sans-serif;">
   <%- include('partials/header', { user }) %>
+
   <div style="
     max-width: 800px;
     margin: 2rem auto;
@@ -40,6 +42,7 @@
       color: #ecf0f1;
       margin-bottom: 1rem;
     "><%= blog.title %></h1>
+
     <% if (blog.coverImage) { %>
       <img src="<%= blog.coverImage %>" alt="Cover Image" style="
         max-width: 100%;
@@ -48,6 +51,7 @@
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
       ">
     <% } %>
+
     <div style="
       font-size: 0.9rem;
       color: #7f8c8d;
@@ -56,9 +60,12 @@
       Posted by <a href="/profile/<%= blog.createdBy._id %>" style="
         color: #3498db;
         text-decoration: none;
-      " onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'"><i class="fas fa-user"></i> <%= blog.createdBy.fullname %></a>
+      " onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">
+        <i class="fas fa-user"></i> <%= blog.createdBy.fullname %>
+      </a>
       <i class="fas fa-clock"></i> <%= moment(blog.createdAt).fromNow() %>
     </div>
+
     <div style="
       color: #ecf0f1;
       margin-bottom: 2rem;
@@ -66,6 +73,7 @@
     ">
       <p><%= blog.body %></p>
     </div>
+
     <div style="
       display: flex;
       gap: 1rem;
@@ -87,6 +95,7 @@
             <%= blog.likes.includes(user._id) ? 'Unlike' : 'Like' %> (<%= blog.likes.length %>)
           </button>
         </form>
+
         <% if (user._id.toString() === blog.createdBy._id.toString()) { %>
           <form action="/blog/<%= blog._id %>?_method=DELETE" method="POST" class="delete-form">
             <button class="delete-btn" type="submit" style="
@@ -98,7 +107,8 @@
               cursor: pointer;
               font-size: 0.9rem;
               transition: background-color 0.3s, transform 0.2s;
-            " onmouseover="this.style.backgroundColor='#c0392b'; this.style.transform='scale(1.05)'" onmouseout="this.style.backgroundColor='#e74c3c'; this.style.transform='scale(1)'">
+            " onmouseover="this.style.backgroundColor='#c0392b'; this.style.transform='scale(1.05)'"
+               onmouseout="this.style.backgroundColor='#e74c3c'; this.style.transform='scale(1)'">
               <i class="fas fa-trash"></i> Delete Blog
             </button>
           </form>
@@ -106,8 +116,10 @@
       <% } %>
     </div>
 
+    <!-- Comments section -->
     <div style="margin-top: 2rem;">
       <h2 style="color: #ecf0f1;"><i class="fas fa-comments"></i> Comments</h2>
+
       <% comments.forEach(comment => { %>
         <div style="
           display: flex;
@@ -126,11 +138,16 @@
             <p style="
               margin-bottom: 0.5rem;
               color: #ecf0f1;
-            "><strong><%= comment.createdBy.fullname %></strong>: <%= comment.content %></p>
+            ">
+              <strong><%= comment.createdBy.fullname %></strong>: <%= comment.content %>
+            </p>
             <p style="
               font-size: 0.8rem;
               color: #7f8c8d;
-            "><i class="fas fa-clock"></i> <%= moment(comment.createdAt).fromNow() %></p>
+            ">
+              <i class="fas fa-clock"></i> <%= moment(comment.createdAt).fromNow() %>
+            </p>
+
             <% if (user && user._id.toString() === comment.createdBy._id.toString()) { %>
               <form action="/comment/<%= comment._id %>?_method=DELETE&blogId=<%= blog._id %>" method="POST" class="delete-form">
                 <button class="delete-btn" type="submit" style="
@@ -142,12 +159,14 @@
                   cursor: pointer;
                   font-size: 0.9rem;
                   transition: background-color 0.3s, transform 0.2s;
-                " onmouseover="this.style.backgroundColor='#c0392b'; this.style.transform='scale(1.05)'" onmouseout="this.style.backgroundColor='#e74c3c'; this.style.transform='scale(1)'">
+                " onmouseover="this.style.backgroundColor='#c0392b'; this.style.transform='scale(1.05)'"
+                   onmouseout="this.style.backgroundColor='#e74c3c'; this.style.transform='scale(1)'">
                   <i class="fas fa-trash"></i> Delete Comment
                 </button>
               </form>
             <% } %>
-            <form action="/comment/<%= comment._id %>/like" method="POST">
+
+            <form action="/comment/<%= comment._id %>/like" method="POST" style="display:inline-block;">
               <button class="like-btn" type="submit" style="
                 padding: 0.5rem 1rem;
                 background-color: <%= comment.likes.includes(user?._id) ? '#e74c3c' : '#3498db' %>;
@@ -179,6 +198,7 @@
               color: #ecf0f1;
               transition: border-color 0.3s;
             " onfocus="this.style.borderColor='#3498db'" onblur="this.style.borderColor='#34495e'"></textarea>
+
             <button type="submit" style="
               padding: 0.75rem;
               background-color: #3498db;
@@ -188,7 +208,8 @@
               cursor: pointer;
               font-size: 1rem;
               transition: background-color 0.3s, transform 0.2s;
-            " onmouseover="this.style.backgroundColor='#2980b9'; this.style.transform='scale(1.05)'" onmouseout="this.style.backgroundColor='#3498db'; this.style.transform='scale(1)'">
+            " onmouseover="this.style.backgroundColor='#2980b9'; this.style.transform='scale(1.05)'"
+               onmouseout="this.style.backgroundColor='#3498db'; this.style.transform='scale(1)'">
               <i class="fas fa-comment"></i> Post Comment
             </button>
           </form>
@@ -196,6 +217,7 @@
       <% } %>
     </div>
   </div>
+
   <script>
     document.addEventListener('DOMContentLoaded', () => {
       document.querySelectorAll('.delete-form').forEach(form => {
@@ -207,6 +229,7 @@
       });
     });
   </script>
+
   <style>
     @media (max-width: 768px) {
       div[style*='max-width: 800px'] { margin: 1rem; padding: 1rem; }
